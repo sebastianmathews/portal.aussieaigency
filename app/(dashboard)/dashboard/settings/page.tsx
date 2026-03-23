@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { Building2, Phone, Save, Loader2 } from "lucide-react";
+import { Building2, Save, Loader2 } from "lucide-react";
+import { PhoneNumberPicker } from "@/components/settings/phone-number-picker";
 
 const TIMEZONES = [
   "Australia/Sydney",
@@ -214,50 +215,32 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Phone settings */}
+      {/* Phone number picker */}
+      <PhoneNumberPicker
+        currentNumber={twilioNumber || null}
+        onNumberProvisioned={(phone) => setTwilioNumber(phone)}
+      />
+
+      {/* Forwarding number */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-green-50 p-2">
-              <Phone className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Phone Configuration</CardTitle>
-              <CardDescription>
-                Your Twilio number and call forwarding settings
-              </CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-lg">Call Forwarding</CardTitle>
+          <CardDescription>
+            When the AI agent needs to escalate a call, it will transfer to this number.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="twilio">Twilio Phone Number</Label>
-              <Input
-                id="twilio"
-                value={twilioNumber}
-                disabled
-                className="bg-muted"
-                placeholder="Assigned by system"
-              />
-              <p className="text-xs text-muted-foreground">
-                This number is assigned to your account and cannot be changed
-                here.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="forwarding">Forwarding Number</Label>
-              <Input
-                id="forwarding"
-                value={forwardingNumber}
-                onChange={(e) => setForwardingNumber(e.target.value)}
-                placeholder="+61 4XX XXX XXX"
-              />
-              <p className="text-xs text-muted-foreground">
-                Calls will be transferred here when the AI agent needs to
-                escalate.
-              </p>
-            </div>
+        <CardContent>
+          <div className="space-y-2 max-w-md">
+            <Label htmlFor="forwarding">Forwarding Number</Label>
+            <Input
+              id="forwarding"
+              value={forwardingNumber}
+              onChange={(e) => setForwardingNumber(e.target.value)}
+              placeholder="+61 4XX XXX XXX"
+            />
+            <p className="text-xs text-muted-foreground">
+              Your mobile or office number for human escalation.
+            </p>
           </div>
         </CardContent>
       </Card>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AgentForm } from "@/components/agent/agent-form";
+import { TestAgent } from "@/components/agent/test-agent";
 import { type BusinessHoursData } from "@/components/agent/business-hours";
 import { type FAQ } from "@/components/agent/faq-editor";
 import { Bot, Sparkles } from "lucide-react";
@@ -67,15 +68,25 @@ export default async function AgentPage() {
               : "Manage your AI agent's voice, behavior, and settings"}
           </p>
         </div>
-        {!isNew && agent?.is_active && (
-          <div className="hidden sm:flex items-center gap-2 rounded-full bg-green-50 border border-green-200 px-4 py-1.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
-            </span>
-            <span className="text-sm font-medium text-green-700">
-              Agent Active
-            </span>
+        {!isNew && (
+          <div className="hidden sm:flex items-center gap-3">
+            {agent?.elevenlabs_agent_id && (
+              <TestAgent
+                agentId={agent.elevenlabs_agent_id}
+                agentName={agent.name}
+              />
+            )}
+            {agent?.is_active && (
+              <div className="flex items-center gap-2 rounded-full bg-green-50 border border-green-200 px-4 py-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                </span>
+                <span className="text-sm font-medium text-green-700">
+                  Agent Active
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

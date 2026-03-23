@@ -5,6 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Play, Pause, Search, Mic2, Volume2 } from "lucide-react";
 
 interface Voice {
@@ -25,7 +32,10 @@ export function VoiceSelector({ value, onChange }: VoiceSelectorProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<"all" | "premade" | "cloned">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [ageFilter, setAgeFilter] = useState<string>("all");
+  const [accentFilter, setAccentFilter] = useState<string>("all");
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -47,13 +57,11 @@ export function VoiceSelector({ value, onChange }: VoiceSelectorProps) {
 
   const handlePlay = (voice: Voice) => {
     if (playingId === voice.voice_id) {
-      // Stop playing
       audioRef.current?.pause();
       setPlayingId(null);
       return;
     }
 
-    // Play new voice
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -67,22 +75,62 @@ export function VoiceSelector({ value, onChange }: VoiceSelectorProps) {
     audio.onerror = () => setPlayingId(null);
   };
 
-  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       audioRef.current?.pause();
     };
   }, []);
 
+  // Extract unique filter values from voices
+  const accents = Array.from(
+    new Set(voices.map((v) => v.labels?.accent).filter(Boolean))
+  ).sort((a, b) => {
+    // Put Australian first
+    if (a.toLowerCase() === "australian") return -1;
+    if (b.toLowerCase() === "australian") return 1;
+    return a.localeCompare(b);
+  });
+
+  const genders = Array.from(
+    new Set(voices.map((v) => v.labels?.gender).filter(Boolean))
+  ).sort();
+
+  const ages = Array.from(
+    new Set(voices.map((v) => v.labels?.age).filter(Boolean))
+  ).sort();
+
+  const categories = Array.from(
+    new Set(voices.map((v) => v.category).filter(Boolean))
+  ).sort();
+
   const filteredVoices = voices.filter((voice) => {
     const matchesSearch = voice.name
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchesCategory =
-      category === "all" ||
-      (category === "premade" && voice.category === "premade") ||
-      (category === "cloned" && voice.category === "cloned");
-    return matchesSearch && matchesCategory;
+      categoryFilter === "all" || voice.category === categoryFilter;
+    const matchesGender =
+      genderFilter === "all" || voice.labels?.gender === genderFilter;
+    const matchesAge =
+      ageFilter === "all" || voice.labels?.age === ageFilter;
+    const matchesAccent =
+      accentFilter === "all" ||
+      voice.labels?.accent?.toLowerCase() === accentFilter.toLowerCase();
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesGender &&
+      matchesAge &&
+      matchesAccent
+    );
+  });
+
+  // Sort: Australian voices first
+  const sortedVoices = [...filteredVoices].sort((a, b) => {
+    const aIsAussie = a.labels?.accent?.toLowerCase() === "australian" ? 0 : 1;
+    const bIsAussie = b.labels?.accent?.toLowerCase() === "australian" ? 0 : 1;
+    if (aIsAussie !== bIsAussie) return aIsAussie - bIsAussie;
+    return a.name.localeCompare(b.name);
   });
 
   if (loading) {
@@ -125,42 +173,126 @@ export function VoiceSelector({ value, onChange }: VoiceSelectorProps) {
 
   return (
     <div className="space-y-4">
-      {/* Search and filter bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search voices..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex gap-2">
-          {(["all", "premade", "cloned"] as const).map((cat) => (
-            <Button
-              key={cat}
-              variant={category === cat ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCategory(cat)}
-              className="capitalize"
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search voices..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Filter row */}
+      <div className="flex flex-wrap gap-2">
+        <Select value={accentFilter} onValueChange={setAccentFilter}>
+          <SelectTrigger className="w-[160px] h-9 text-sm">
+            <SelectValue placeholder="Accent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Accents</SelectItem>
+            {accents.map((accent) => (
+              <SelectItem key={accent} value={accent}>
+                {accent.charAt(0).toUpperCase() + accent.slice(1)}
+                {accent.toLowerCase() === "australian" ? " ★" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <SelectTrigger className="w-[130px] h-9 text-sm">
+            <SelectValue placeholder="Gender" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Genders</SelectItem>
+            {genders.map((gender) => (
+              <SelectItem key={gender} value={gender}>
+                {gender.charAt(0).toUpperCase() + gender.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={ageFilter} onValueChange={setAgeFilter}>
+          <SelectTrigger className="w-[130px] h-9 text-sm">
+            <SelectValue placeholder="Age" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Ages</SelectItem>
+            {ages.map((age) => (
+              <SelectItem key={age} value={age}>
+                {age.charAt(0).toUpperCase() + age.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[140px] h-9 text-sm">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {(accentFilter !== "all" ||
+          genderFilter !== "all" ||
+          ageFilter !== "all" ||
+          categoryFilter !== "all") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 text-xs text-muted-foreground"
+            onClick={() => {
+              setAccentFilter("all");
+              setGenderFilter("all");
+              setAgeFilter("all");
+              setCategoryFilter("all");
+            }}
+          >
+            Clear filters
+          </Button>
+        )}
+      </div>
+
+      {/* Results count */}
+      <div className="text-xs text-muted-foreground">
+        {sortedVoices.length} voice{sortedVoices.length !== 1 ? "s" : ""} found
+        {accentFilter === "all" && (
+          <span>
+            {" "}
+            &middot;{" "}
+            <button
+              type="button"
+              className="text-[#F5A623] hover:underline font-medium"
+              onClick={() => setAccentFilter("australian")}
             >
-              {cat === "all" ? "All Voices" : cat}
-            </Button>
-          ))}
-        </div>
+              Show Australian only
+            </button>
+          </span>
+        )}
       </div>
 
       {/* Voices grid */}
-      {filteredVoices.length === 0 ? (
+      {sortedVoices.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">
-          No voices found matching your search.
+          No voices found matching your filters.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1">
-          {filteredVoices.map((voice) => {
+          {sortedVoices.map((voice) => {
             const isSelected = value === voice.voice_id;
             const isPlaying = playingId === voice.voice_id;
+            const isAussie =
+              voice.labels?.accent?.toLowerCase() === "australian";
 
             return (
               <button
@@ -170,7 +302,9 @@ export function VoiceSelector({ value, onChange }: VoiceSelectorProps) {
                 className={`relative flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all hover:shadow-sm ${
                   isSelected
                     ? "border-[#F5A623] bg-[#F5A623]/5 shadow-sm"
-                    : "border-gray-100 hover:border-gray-200 bg-white"
+                    : isAussie
+                      ? "border-[#F5A623]/30 bg-[#F5A623]/[0.02] hover:border-[#F5A623]/50"
+                      : "border-gray-100 hover:border-gray-200 bg-white"
                 }`}
               >
                 {/* Voice icon */}
@@ -193,14 +327,29 @@ export function VoiceSelector({ value, onChange }: VoiceSelectorProps) {
                   >
                     {voice.name}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px] px-1.5 py-0 h-4"
-                    >
-                      {voice.category}
-                    </Badge>
-                    {voice.labels?.accent && (
+                  <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                    {isAussie && (
+                      <Badge className="text-[10px] px-1.5 py-0 h-4 bg-[#F5A623]/15 text-[#F5A623] border-[#F5A623]/30 hover:bg-[#F5A623]/15">
+                        Australian
+                      </Badge>
+                    )}
+                    {voice.labels?.gender && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0 h-4"
+                      >
+                        {voice.labels.gender}
+                      </Badge>
+                    )}
+                    {voice.labels?.age && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0 h-4"
+                      >
+                        {voice.labels.age}
+                      </Badge>
+                    )}
+                    {voice.labels?.accent && !isAussie && (
                       <span className="text-[10px] text-muted-foreground">
                         {voice.labels.accent}
                       </span>

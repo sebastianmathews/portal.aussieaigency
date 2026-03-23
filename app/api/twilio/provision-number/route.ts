@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { countryCode, areaCode } = body;
+    const { countryCode, areaCode, phoneNumber: requestedNumber } = body;
 
     if (!countryCode) {
       return NextResponse.json(
@@ -40,26 +40,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Search for available numbers
-    const availableNumbers = await searchAvailableNumbers(
-      countryCode,
-      areaCode || undefined
-    );
+    // If a specific number was requested, use it directly
+    // Otherwise search and pick the first available
+    let numberToProvision: string;
 
-    if (availableNumbers.length === 0) {
-      return NextResponse.json(
-        { error: "No available numbers found for the specified criteria" },
-        { status: 404 }
+    if (requestedNumber) {
+      numberToProvision = requestedNumber;
+    } else {
+      const availableNumbers = await searchAvailableNumbers(
+        countryCode,
+        areaCode || undefined
       );
+
+      if (availableNumbers.length === 0) {
+        return NextResponse.json(
+          { error: "No available numbers found for the specified criteria" },
+          { status: 404 }
+        );
+      }
+
+      numberToProvision = availableNumbers[0].phoneNumber;
     }
 
-    // Provision the first available number
-    const selectedNumber = availableNumbers[0];
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     const webhookUrl = `${baseUrl}/api/webhooks/twilio/incoming`;
 
     const provisioned = await provisionNumber(
-      selectedNumber.phoneNumber,
+      numberToProvision,
       webhookUrl
     );
 
