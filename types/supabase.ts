@@ -105,6 +105,8 @@ export interface Database {
           call_recording: boolean
           voice_settings: Json | null
           knowledge_items: Json | null
+          interruptible: boolean
+          timezone: string
           created_at: string
           updated_at: string
         }
@@ -126,6 +128,8 @@ export interface Database {
           call_recording?: boolean
           voice_settings?: Json | null
           knowledge_items?: Json | null
+          interruptible?: boolean
+          timezone?: string
           created_at?: string
           updated_at?: string
         }
@@ -147,6 +151,8 @@ export interface Database {
           call_recording?: boolean
           voice_settings?: Json | null
           knowledge_items?: Json | null
+          interruptible?: boolean
+          timezone?: string
           created_at?: string
           updated_at?: string
         }

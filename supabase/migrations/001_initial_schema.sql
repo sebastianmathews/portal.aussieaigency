@@ -40,6 +40,8 @@ create table agents (
   call_recording boolean default true,
   voice_settings jsonb,
   knowledge_items jsonb default '[]',
+  interruptible boolean default true,
+  timezone text default 'Australia/Sydney',
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );

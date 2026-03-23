@@ -62,6 +62,8 @@ export interface AgentData {
   webhookUrl: string;
   callRecording: boolean;
   voiceSettings: VoiceSettingsData;
+  interruptible: boolean;
+  timezone: string;
 }
 
 interface AgentFormProps {
@@ -112,6 +114,12 @@ export function AgentForm({ agent }: AgentFormProps) {
   const [webhookUrl, setWebhookUrl] = useState(agent?.webhookUrl ?? "");
   const [callRecording, setCallRecording] = useState(
     agent?.callRecording ?? false
+  );
+  const [interruptible, setInterruptible] = useState(
+    agent?.interruptible ?? true
+  );
+  const [timezone, setTimezone] = useState(
+    agent?.timezone ?? "Australia/Sydney"
   );
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettingsData>(
     agent?.voiceSettings ?? DEFAULT_VOICE_SETTINGS
@@ -176,6 +184,8 @@ export function AgentForm({ agent }: AgentFormProps) {
         webhookUrl: webhookUrl.trim(),
         callRecording,
         voiceSettings,
+        interruptible,
+        timezone,
         ...(agent ? { agentId: agent.elevenlabsAgentId } : {}),
       };
 
@@ -324,6 +334,40 @@ export function AgentForm({ agent }: AgentFormProps) {
                   this number.
                 </p>
               </div>
+
+              {/* Timezone */}
+              <div className="space-y-2">
+                <Label htmlFor="agent-timezone">Agent Timezone</Label>
+                <Select value={timezone} onValueChange={setTimezone}>
+                  <SelectTrigger id="agent-timezone" className="max-w-md">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      "Australia/Sydney",
+                      "Australia/Melbourne",
+                      "Australia/Brisbane",
+                      "Australia/Perth",
+                      "Australia/Adelaide",
+                      "Australia/Hobart",
+                      "Australia/Darwin",
+                      "Pacific/Auckland",
+                      "America/New_York",
+                      "America/Los_Angeles",
+                      "Europe/London",
+                      "Asia/Singapore",
+                      "UTC",
+                    ].map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Used for business hours and time references in conversations.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -394,6 +438,22 @@ export function AgentForm({ agent }: AgentFormProps) {
                   <p className="text-xs text-muted-foreground">
                     The first thing your agent will say when answering a call.
                   </p>
+                </div>
+
+                {/* Interruptible toggle */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="font-medium">Interruptible</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {interruptible
+                        ? "Callers can interrupt the AI while it's speaking."
+                        : "AI will finish speaking before listening to the caller."}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={interruptible}
+                    onCheckedChange={setInterruptible}
+                  />
                 </div>
 
                 {/* System prompt */}

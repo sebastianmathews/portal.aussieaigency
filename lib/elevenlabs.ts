@@ -68,6 +68,8 @@ export interface AgentConfig {
   escalationNumber?: string;
   faqs?: FAQ[];
   voiceSettings?: VoiceSettings;
+  interruptible?: boolean;
+  timezone?: string;
 }
 
 export interface Agent {
@@ -148,7 +150,11 @@ function buildPromptWithFaqs(systemPrompt: string, faqs?: FAQ[]): string {
  * Create a new conversational AI agent.
  */
 export async function createAgent(config: AgentConfig): Promise<Agent> {
-  const fullPrompt = buildPromptWithFaqs(config.systemPrompt, config.faqs);
+  let basePrompt = config.systemPrompt;
+  if (config.timezone) {
+    basePrompt += `\n\nTimezone: ${config.timezone}. Use this timezone for all date/time references.`;
+  }
+  const fullPrompt = buildPromptWithFaqs(basePrompt, config.faqs);
 
   return apiRequest<Agent>("/convai/agents/create", {
     method: "POST",
@@ -164,6 +170,9 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
           ...(config.maxCallDuration && {
             max_duration_seconds: config.maxCallDuration,
           }),
+        },
+        turn: {
+          mode: config.interruptible === false ? "turn_based" : "interruptible",
         },
         tts: buildTtsConfig(config.voiceId, config.voiceSettings),
         ...(config.callRecording && {
@@ -205,7 +214,11 @@ export async function updateAgent(
   const agentSection: Record<string, unknown> = {};
 
   if (config.systemPrompt) {
-    const fullPrompt = buildPromptWithFaqs(config.systemPrompt, config.faqs);
+    let basePrompt = config.systemPrompt;
+    if (config.timezone) {
+      basePrompt += `\n\nTimezone: ${config.timezone}. Use this timezone for all date/time references.`;
+    }
+    const fullPrompt = buildPromptWithFaqs(basePrompt, config.faqs);
     agentSection.prompt = { prompt: fullPrompt };
   } else if (config.faqs && config.faqs.length > 0) {
     // FAQs changed but system prompt didn't — we still need to rebuild
@@ -222,6 +235,11 @@ export async function updateAgent(
   }
   if (Object.keys(agentSection).length > 0) {
     conversationConfig.agent = agentSection;
+  }
+  if (config.interruptible !== undefined) {
+    conversationConfig.turn = {
+      mode: config.interruptible === false ? "turn_based" : "interruptible",
+    };
   }
   if (config.voiceId || config.voiceSettings) {
     conversationConfig.tts = buildTtsConfig(

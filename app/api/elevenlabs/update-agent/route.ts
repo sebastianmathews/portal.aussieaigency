@@ -30,6 +30,8 @@ export async function PUT(request: NextRequest) {
       callRecording,
       webhookUrl,
       voiceSettings,
+      interruptible,
+      timezone,
     } = body;
 
     if (!agentId) {
@@ -81,6 +83,8 @@ export async function PUT(request: NextRequest) {
       callRecording,
       webhookUrl,
       voiceSettings,
+      interruptible,
+      timezone,
     });
 
     // Update local agents table
@@ -101,6 +105,10 @@ export async function PUT(request: NextRequest) {
       localUpdate.call_recording = callRecording;
     if (voiceSettings !== undefined)
       localUpdate.voice_settings = voiceSettings;
+    if (interruptible !== undefined)
+      localUpdate.interruptible = interruptible;
+    if (timezone !== undefined)
+      localUpdate.timezone = timezone;
 
     localUpdate.updated_at = new Date().toISOString();
 

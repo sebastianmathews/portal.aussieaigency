@@ -136,6 +136,8 @@ export default async function AgentPage() {
                 webhookUrl: agent.webhook_url ?? "",
                 callRecording: agent.call_recording ?? false,
                 voiceSettings: (agent.voice_settings as unknown as VoiceSettingsData) ?? DEFAULT_VOICE_SETTINGS,
+                interruptible: (agent as Record<string, unknown>).interruptible as boolean ?? true,
+                timezone: ((agent as Record<string, unknown>).timezone as string) ?? "Australia/Sydney",
               }
             : null
         }
