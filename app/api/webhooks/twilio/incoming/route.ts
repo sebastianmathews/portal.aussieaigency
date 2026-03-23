@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+import twilio from "twilio";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+
+    const called = formData.get("Called") as string | null;
+    const from = formData.get("From") as string | null;
+    const callSid = formData.get("CallSid") as string | null;
+
+    if (!called || !from || !callSid) {
+      return NextResponse.json(
+        { error: "Missing required fields: Called, From, CallSid" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createAdminClient();
+
+    // Find organization by twilio_number
+    const { data: org, error: orgError } = await supabase
+      .from("organizations")
+      .select("id, elevenlabs_agent_id")
+      .eq("twilio_number", called)
+      .single();
+
+    if (orgError || !org) {
+      const twiml = new twilio.twiml.VoiceResponse();
+      twiml.say("Sorry, this number is not configured. Goodbye.");
+      twiml.hangup();
+
+      return new NextResponse(twiml.toString(), {
+        status: 200,
+        headers: { "Content-Type": "text/xml" },
+      });
+    }
+
+    // Create call record
+    const { error: callError } = await supabase.from("calls").insert({
+      twilio_call_sid: callSid,
+      organization_id: org.id,
+      caller_number: from,
+      agent_id: org.elevenlabs_agent_id ?? "",
+      status: "ringing",
+    });
+
+    if (callError) {
+      console.error("Failed to create call record:", callError);
+    }
+
+    const twiml = new twilio.twiml.VoiceResponse();
+
+    const agentId = org.elevenlabs_agent_id;
+
+    if (agentId) {
+      // Connect to ElevenLabs via WebSocket stream
+      const connect = twiml.connect();
+      connect.stream({
+        url: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`,
+      });
+    } else {
+      twiml.say(
+        "Sorry, no AI agent has been configured for this number. Please contact support."
+      );
+      twiml.hangup();
+    }
+
+    return new NextResponse(twiml.toString(), {
+      status: 200,
+      headers: { "Content-Type": "text/xml" },
+    });
+  } catch (error) {
+    console.error("Twilio incoming webhook error:", error);
+
+    const twiml = new twilio.twiml.VoiceResponse();
+    twiml.say("An error occurred. Please try again later.");
+    twiml.hangup();
+
+    return new NextResponse(twiml.toString(), {
+      status: 200,
+      headers: { "Content-Type": "text/xml" },
+    });
+  }
+}
