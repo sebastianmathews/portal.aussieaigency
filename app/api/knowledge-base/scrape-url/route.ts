@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isSafeUrl, checkRateLimit, getClientIp } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +25,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limit: 10 URL scrapes per minute per user
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`scrape:${user.id}:${ip}`, 10, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429 }
+      );
+    }
+
     // Validate URL
     let parsedUrl: URL;
     try {
@@ -34,6 +45,14 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: "Invalid URL. Must start with http:// or https://" },
+        { status: 400 }
+      );
+    }
+
+    // SSRF protection: block private/internal IPs and metadata endpoints
+    if (!isSafeUrl(parsedUrl.toString())) {
+      return NextResponse.json(
+        { error: "URL targets a private or internal resource and is not allowed." },
         { status: 400 }
       );
     }

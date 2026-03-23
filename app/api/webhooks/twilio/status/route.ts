@@ -1,20 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateTwilioSignature, formDataToObject } from "@/lib/security";
 
 const STATUS_MAP: Record<string, string> = {
   completed: "completed",
   failed: "failed",
-  busy: "busy",
-  "no-answer": "no-answer",
-  canceled: "canceled",
+  busy: "failed",
+  "no-answer": "failed",
+  canceled: "failed",
   ringing: "ringing",
-  "in-progress": "in-progress",
-  queued: "queued",
+  "in-progress": "in_progress",
+  queued: "ringing",
 };
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+
+    // Verify Twilio signature
+    const signature = request.headers.get("x-twilio-signature");
+    const url = request.nextUrl.toString();
+    const params = formDataToObject(formData);
+
+    if (!validateTwilioSignature(url, params, signature)) {
+      console.error("Invalid Twilio signature on status webhook");
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 403 }
+      );
+    }
 
     const callSid = formData.get("CallSid") as string | null;
     const callStatus = formData.get("CallStatus") as string | null;
@@ -29,25 +43,24 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    const mappedStatus = STATUS_MAP[callStatus] || callStatus;
+    const mappedStatus = STATUS_MAP[callStatus] || "completed";
 
     const updateData: Record<string, unknown> = {
       status: mappedStatus,
     };
 
     if (callDuration) {
-      updateData.duration = parseInt(callDuration, 10);
+      const duration = parseInt(callDuration, 10);
+      if (!isNaN(duration) && duration >= 0) {
+        updateData.duration = duration;
+      }
     }
 
-    // Mark end time for terminal statuses
-    if (["completed", "failed", "busy", "no-answer", "canceled"].includes(mappedStatus)) {
-      updateData.ended_at = new Date().toISOString();
-    }
-
+    // Fixed: use correct column name "twilio_call_sid" (was "call_sid")
     const { error } = await supabase
       .from("calls")
       .update(updateData)
-      .eq("call_sid", callSid);
+      .eq("twilio_call_sid", callSid);
 
     if (error) {
       console.error("Failed to update call status:", error);

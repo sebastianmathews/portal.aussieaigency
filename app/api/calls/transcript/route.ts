@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { escapeHtml, checkRateLimit, getClientIp } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,16 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 5 transcript emails per minute per user
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`transcript:${user.id}:${ip}`, 5, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
     }
 
     const body = await request.json();
@@ -79,18 +90,27 @@ export async function POST(request: NextRequest) {
       timeStyle: "short",
     });
 
+    // Escape all user-controlled content to prevent XSS
+    const safeCaller = escapeHtml(call.caller_number ?? "Unknown");
+    const safeSummary = call.summary ? escapeHtml(call.summary) : "";
+    const safeTranscript = escapeHtml(
+      typeof call.transcript === "string"
+        ? call.transcript
+        : JSON.stringify(call.transcript, null, 2)
+    );
+
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
       to: email,
-      subject: `Call Transcript — ${call.caller_number ?? "Unknown Caller"} — ${formattedDate}`,
+      subject: `Call Transcript — ${safeCaller} — ${formattedDate}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #0A1628;">Call Transcript</h2>
-          <p><strong>Caller:</strong> ${call.caller_number ?? "Unknown"}</p>
-          <p><strong>Date:</strong> ${formattedDate}</p>
-          ${call.summary ? `<h3 style="color: #0A1628;">Summary</h3><p>${call.summary}</p>` : ""}
+          <p><strong>Caller:</strong> ${safeCaller}</p>
+          <p><strong>Date:</strong> ${escapeHtml(formattedDate)}</p>
+          ${safeSummary ? `<h3 style="color: #0A1628;">Summary</h3><p>${safeSummary}</p>` : ""}
           <h3 style="color: #0A1628;">Full Transcript</h3>
-          <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; white-space: pre-wrap; font-size: 14px;">${call.transcript}</div>
+          <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; white-space: pre-wrap; font-size: 14px;">${safeTranscript}</div>
           <hr style="margin-top: 32px; border: none; border-top: 1px solid #eee;" />
           <p style="color: #888; font-size: 12px;">Sent by Aussie AI Agency</p>
         </div>

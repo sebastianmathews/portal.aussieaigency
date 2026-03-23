@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateTwilioSignature, formDataToObject } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+
+    // Verify Twilio signature
+    const signature = request.headers.get("x-twilio-signature");
+    const url = request.nextUrl.toString();
+    const params = formDataToObject(formData);
+
+    if (!validateTwilioSignature(url, params, signature)) {
+      console.error("Invalid Twilio signature on incoming webhook");
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 403 }
+      );
+    }
 
     const called = formData.get("Called") as string | null;
     const from = formData.get("From") as string | null;

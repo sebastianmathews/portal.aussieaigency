@@ -71,6 +71,20 @@ function extractLeadData(
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify webhook signature if secret is configured
+    const webhookSecret = process.env.ELEVENLABS_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const signature = request.headers.get("x-elevenlabs-signature")
+        ?? request.headers.get("x-webhook-signature");
+      if (!signature || signature !== webhookSecret) {
+        console.error("Invalid ElevenLabs webhook signature");
+        return NextResponse.json(
+          { error: "Invalid signature" },
+          { status: 403 }
+        );
+      }
+    }
+
     const payload: ElevenLabsWebhookPayload = await request.json();
 
     if (!payload.type) {

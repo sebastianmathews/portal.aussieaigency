@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { searchAvailableNumbers, provisionNumber } from "@/lib/twilio";
+import { checkRateLimit, getClientIp } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,16 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 3 provisions per hour (expensive Twilio operation)
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`provision:${user.id}:${ip}`, 3, 3600_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();

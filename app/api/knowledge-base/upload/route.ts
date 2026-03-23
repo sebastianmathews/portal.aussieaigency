@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIp } from "@/lib/security";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -23,6 +24,16 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 20 uploads per minute
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`upload:${user.id}:${ip}`, 20, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many uploads. Try again later." },
+        { status: 429 }
+      );
     }
 
     const { data: profile } = await supabase
