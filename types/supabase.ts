@@ -104,6 +104,7 @@ export interface Database {
           webhook_url: string | null
           call_recording: boolean
           voice_settings: Json | null
+          knowledge_items: Json | null
           created_at: string
           updated_at: string
         }
@@ -124,6 +125,7 @@ export interface Database {
           webhook_url?: string | null
           call_recording?: boolean
           voice_settings?: Json | null
+          knowledge_items?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -144,6 +146,7 @@ export interface Database {
           webhook_url?: string | null
           call_recording?: boolean
           voice_settings?: Json | null
+          knowledge_items?: Json | null
           created_at?: string
           updated_at?: string
         }
