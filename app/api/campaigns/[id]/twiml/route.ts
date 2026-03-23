@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
+import { validateTwilioSignature, formDataToObject } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
+  // Verify Twilio signature
+  const formData = await request.formData();
+  const signature = request.headers.get("x-twilio-signature");
+  const url = request.nextUrl.toString();
+  const params = formDataToObject(formData);
+
+  if (!validateTwilioSignature(url, params, signature)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
   const agentId = request.nextUrl.searchParams.get("agentId");
   const contactName = request.nextUrl.searchParams.get("contactName") || "";
   const context = request.nextUrl.searchParams.get("context") || "";
