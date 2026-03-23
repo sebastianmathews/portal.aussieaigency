@@ -20,6 +20,7 @@ import {
 import { Phone, Clock, Bot, CalendarCheck } from "lucide-react";
 import { formatDuration, formatDate, formatPhone } from "@/lib/utils";
 import { DashboardChart } from "@/components/dashboard/chart";
+import { Onboarding } from "@/components/dashboard/onboarding";
 
 const statusVariant: Record<string, "default" | "success" | "destructive" | "warning" | "secondary"> = {
   completed: "success",
@@ -116,6 +117,34 @@ export default async function DashboardPage() {
 
   const minutesIncluded = subscription?.minutes_included ?? 500;
 
+  // Onboarding checks
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("twilio_number")
+    .eq("id", orgId)
+    .single();
+
+  const { data: agentCheck } = await supabase
+    .from("agents")
+    .select("id, faqs, knowledge_items")
+    .eq("organization_id", orgId)
+    .limit(1)
+    .maybeSingle();
+
+  const hasAgent = !!agentCheck;
+  const hasPhone = !!org?.twilio_number;
+  const faqCount = Array.isArray(agentCheck?.faqs) ? (agentCheck.faqs as unknown[]).length : 0;
+  const kbCount = Array.isArray((agentCheck as Record<string, unknown>)?.knowledge_items)
+    ? ((agentCheck as Record<string, unknown>).knowledge_items as unknown[]).length
+    : 0;
+  const hasKnowledge = faqCount > 0 || kbCount > 0;
+
   const stats = [
     {
       title: "Total Calls",
@@ -155,6 +184,14 @@ export default async function DashboardPage() {
           Overview of your AI receptionist performance
         </p>
       </div>
+
+      {/* Onboarding wizard (hides when all steps done) */}
+      <Onboarding
+        userName={profile?.full_name ?? ""}
+        hasAgent={hasAgent}
+        hasPhone={hasPhone}
+        hasKnowledge={hasKnowledge}
+      />
 
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
