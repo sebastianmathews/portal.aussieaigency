@@ -358,19 +358,43 @@ export async function addKBDocumentUrl(
 }
 
 /**
- * Link a knowledge base document to an agent.
+ * Link knowledge base documents to an agent.
+ * Fetches existing KB docs first and merges to avoid overwriting.
  */
 export async function linkKBToAgent(
   agentId: string,
-  kbDocumentIds: string[]
+  newDocumentIds: string[]
 ): Promise<void> {
+  // Fetch current agent to get existing KB documents
+  let existingIds: string[] = [];
+  try {
+    const agent = await apiRequest<{
+      conversation_config?: {
+        agent?: {
+          prompt?: {
+            knowledge_base?: Array<{ id: string; type: string }>;
+          };
+        };
+      };
+    }>(`/convai/agents/${agentId}`, { method: "GET" });
+
+    existingIds = (
+      agent.conversation_config?.agent?.prompt?.knowledge_base ?? []
+    ).map((kb) => kb.id);
+  } catch {
+    // If fetch fails, proceed with just the new IDs
+  }
+
+  // Merge: existing + new, deduplicated
+  const allIds = Array.from(new Set([...existingIds, ...newDocumentIds]));
+
   await apiRequest(`/convai/agents/${agentId}`, {
     method: "PATCH",
     body: JSON.stringify({
       conversation_config: {
         agent: {
           prompt: {
-            knowledge_base: kbDocumentIds.map((id) => ({
+            knowledge_base: allIds.map((id) => ({
               type: "file",
               id,
             })),
