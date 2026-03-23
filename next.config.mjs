@@ -19,8 +19,8 @@ const nextConfig = {
         ],
       },
       {
-        // Widget route — allow embedding on any site
-        source: "/widget/:path*",
+        // Widget routes — allow embedding on any site
+        source: "/(widget|chat-widget)/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "origin-when-cross-origin" },
@@ -31,8 +31,8 @@ const nextConfig = {
         ],
       },
       {
-        // Widget loader script — allow CORS
-        source: "/widget-loader.js",
+        // Widget loader scripts — allow CORS
+        source: "/(widget-loader|chat-widget-loader).js",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Cache-Control", value: "public, max-age=3600" },
