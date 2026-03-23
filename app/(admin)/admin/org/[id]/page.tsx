@@ -43,6 +43,17 @@ export default async function AdminOrgDetailPage({
   if (!org) notFound();
 
   // Fetch related data
+  // Separate count query for accurate total
+  const { count: totalCallCount } = await supabase
+    .from("calls")
+    .select("*", { count: "exact", head: true })
+    .eq("organization_id", params.id);
+
+  const { data: allCallDurations } = await supabase
+    .from("calls")
+    .select("duration")
+    .eq("organization_id", params.id);
+
   const [membersRes, agentsRes, callsRes, subRes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email, role, created_at").eq("organization_id", params.id),
     supabase.from("agents").select("id, name, is_active, voice_id, language, created_at").eq("organization_id", params.id),
@@ -56,7 +67,7 @@ export default async function AdminOrgDetailPage({
   const sub = subRes.data;
 
   const totalMinutes = Math.round(
-    calls.reduce((sum, c) => sum + (c.duration ?? 0), 0) / 60
+    (allCallDurations ?? []).reduce((sum: number, c: { duration: number | null }) => sum + (c.duration ?? 0), 0) / 60
   );
   const avgLeadScore = calls.filter(c => c.lead_score).length > 0
     ? (calls.reduce((sum, c) => sum + (c.lead_score ?? 0), 0) / calls.filter(c => c.lead_score).length).toFixed(1)
@@ -109,7 +120,7 @@ export default async function AdminOrgDetailPage({
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="rounded-full bg-purple-50 p-2"><Phone className="h-4 w-4 text-purple-600" /></div>
-          <div><p className="text-xs text-muted-foreground">Total Calls</p><p className="text-lg font-bold">{calls.length}</p></div>
+          <div><p className="text-xs text-muted-foreground">Total Calls</p><p className="text-lg font-bold">{totalCallCount ?? 0}</p></div>
         </CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3">
           <div className="rounded-full bg-gold-50 p-2"><Clock className="h-4 w-4 text-gold-600" /></div>

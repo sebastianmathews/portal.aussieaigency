@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       contacts: contacts || [],
       script_context: scriptContext || null,
       schedule_time: scheduleTime || null,
-      max_concurrent: maxConcurrent || 1,
+      max_concurrent: maxConcurrent ?? 1,
       status: "draft",
     };
 

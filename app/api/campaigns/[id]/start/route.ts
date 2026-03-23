@@ -61,18 +61,23 @@ export async function POST(
       return NextResponse.json({ error: "No phone number assigned" }, { status: 400 });
     }
 
-    // Update campaign status
-    await admin
-      .from("campaigns")
-      .update({ status: "running" } as never)
-      .eq("id", params.id);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!baseUrl) {
+      return NextResponse.json(
+        { error: "Server not configured: NEXT_PUBLIC_APP_URL is required for outbound campaigns" },
+        { status: 500 }
+      );
+    }
 
     const contacts = Array.isArray(campaign.contacts)
       ? (campaign.contacts as Array<{ phone: string; name?: string; context?: string }>)
       : [];
 
+    if (contacts.length === 0) {
+      return NextResponse.json({ error: "No contacts in this campaign" }, { status: 400 });
+    }
+
     const client = getTwilioClient();
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
     let started = 0;
 
     // Start calls (limited by max_concurrent)
@@ -104,8 +109,15 @@ export async function POST(
       }
     }
 
+    // Only mark running if at least one call started
+    const newStatus = started > 0 ? "running" : "failed";
+    await admin
+      .from("campaigns")
+      .update({ status: newStatus } as never)
+      .eq("id", params.id);
+
     return NextResponse.json(
-      { started, total: contacts.length, status: "running" },
+      { started, total: contacts.length, status: newStatus },
       { status: 200 }
     );
   } catch (error) {

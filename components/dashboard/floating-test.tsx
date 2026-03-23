@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Phone, PhoneOff, Mic, MicOff, X, Loader2, Bot } from "lucide-react";
+import { Phone, PhoneOff, Volume2, VolumeX, X, Loader2, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -252,7 +252,7 @@ export function FloatingTestWidget() {
                       : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
                   )}
                 >
-                  {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={endCall}

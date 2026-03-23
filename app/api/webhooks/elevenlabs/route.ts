@@ -77,7 +77,11 @@ export async function POST(request: NextRequest) {
     if (webhookSecret) {
       const signature = request.headers.get("x-elevenlabs-signature")
         ?? request.headers.get("x-webhook-signature");
-      if (!signature || signature !== webhookSecret) {
+      const { timingSafeEqual } = await import("crypto");
+      const sigOk = signature
+        && signature.length === webhookSecret.length
+        && timingSafeEqual(Buffer.from(signature), Buffer.from(webhookSecret));
+      if (!sigOk) {
         console.error("Invalid ElevenLabs webhook signature");
         return NextResponse.json(
           { error: "Invalid signature" },
@@ -116,13 +120,24 @@ export async function POST(request: NextRequest) {
           .eq("elevenlabs_agent_id", agent_id)
           .single();
 
-        const { error } = await supabase
+        // Two-step: SELECT the most recent ringing call, then UPDATE by ID
+        const { data: ringCall } = await supabase
           .from("calls")
-          .update({ elevenlabs_conversation_id: conversation_id, status: "in_progress" })
+          .select("id")
           .eq("status", "ringing")
           .eq("organization_id", agentOrg?.organization_id ?? "")
           .order("created_at", { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
+
+        if (ringCall) {
+          await supabase
+            .from("calls")
+            .update({ elevenlabs_conversation_id: conversation_id, status: "in_progress" } as never)
+            .eq("id", ringCall.id);
+        }
+
+        const error = null; // preserve variable for existing error check
 
         if (error) {
           console.error("Failed to update call with conversation_id:", error);

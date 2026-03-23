@@ -21,9 +21,11 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    // State contains org ID for callback verification
+    // State contains org ID + CSRF nonce for callback verification
+    const { randomBytes } = await import("crypto");
+    const nonce = randomBytes(16).toString("hex");
     const state = Buffer.from(
-      JSON.stringify({ orgId: profile.organization_id, userId: user.id })
+      JSON.stringify({ orgId: profile.organization_id, userId: user.id, nonce })
     ).toString("base64url");
 
     const authUrl = getGoogleAuthUrl(state);
