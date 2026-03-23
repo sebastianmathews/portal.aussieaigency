@@ -3,19 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Phone, Loader2 } from "lucide-react";
+import { Bot, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://aussieaiagency.com.au";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,86 +45,97 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-500 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center px-4">
+      <div className="w-full max-w-[440px]">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Phone className="h-8 w-8 text-gold" />
-          <span className="text-2xl font-bold text-white">
-            Aussie AI Agency
+        <Link href={SITE_URL} className="flex items-center justify-center gap-2.5 mb-8">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#F5A623] to-[#FFCA5F] rounded-xl flex items-center justify-center shadow-sm">
+            <Bot className="h-5 w-5 text-[#0A1628]" />
+          </div>
+          <span className="font-heading font-bold text-lg text-[#0A1628]">
+            Aussie<span className="text-[#F5A623]">AI</span>Agency
           </span>
+        </Link>
+
+        <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(10,22,40,0.12)] p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-[#0A1628] font-heading">
+              Welcome back
+            </h1>
+            <p className="text-[#6B7280] mt-1.5 text-sm">
+              Sign in to manage your AI receptionist
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-[#0A1628] text-sm font-medium">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@business.com.au"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11 border-[#E8ECF2] focus:border-[#F5A623] focus:ring-[#F5A623]/20"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-[#0A1628] text-sm font-medium">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-11 border-[#E8ECF2] focus:border-[#F5A623] focus:ring-[#F5A623]/20"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 bg-[#F5A623] hover:bg-[#d48d0f] text-[#0A1628] font-semibold text-sm shadow-[0_4px_12px_rgba(245,166,35,0.4)]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+
+          <p className="text-sm text-[#9BA4B5] text-center mt-5">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="text-[#F5A623] hover:text-[#d48d0f] font-semibold"
+            >
+              Start free trial
+            </Link>
+          </p>
         </div>
 
-        <Card className="bg-navy-600/50 border-navy-400/30 shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-white">Welcome back</CardTitle>
-            <CardDescription className="text-navy-200">
-              Sign in to your account to continue
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
-                  <p className="text-sm text-red-400">{error}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-navy-100">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@business.com.au"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-navy-700/50 border-navy-400/30 text-white placeholder:text-navy-300 focus:ring-gold focus:border-gold"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-navy-100">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="bg-navy-700/50 border-navy-400/30 text-white placeholder:text-navy-300 focus:ring-gold focus:border-gold"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gold hover:bg-gold-600 text-navy-500 font-semibold"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-              <p className="text-sm text-navy-200 text-center">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href="/signup"
-                  className="text-gold hover:text-gold-400 font-medium"
-                >
-                  Sign up
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
+        <p className="text-xs text-[#9BA4B5] text-center mt-6">
+          <a href={SITE_URL} className="hover:text-[#6B7280]">
+            ← Back to aussieaiagency.com.au
+          </a>
+        </p>
       </div>
     </div>
   );
