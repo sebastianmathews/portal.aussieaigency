@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -210,14 +211,14 @@ export default async function AdminPage() {
                   const sub = subMap.get(org.id);
                   const stats = callStats.get(org.id);
                   return (
-                    <TableRow key={org.id}>
+                    <TableRow key={org.id} className="cursor-pointer hover:bg-gray-50">
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{org.name}</p>
+                        <Link href={`/admin/org/${org.id}`} className="block">
+                          <p className="font-medium text-[#F5A623] hover:underline">{org.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {org.id.slice(0, 8)}
                           </p>
-                        </div>
+                        </Link>
                       </TableCell>
                       <TableCell className="capitalize">
                         {sub?.plan ?? "None"}

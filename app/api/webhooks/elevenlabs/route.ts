@@ -146,6 +146,13 @@ export async function POST(request: NextRequest) {
           status: "completed",
         };
 
+        // Save recording URL if provided
+        if (metadata?.recording_url) {
+          updateData.recording_url = metadata.recording_url;
+        } else if (payload.data?.recording_url) {
+          updateData.recording_url = payload.data.recording_url;
+        }
+
         if (transcript && transcript.length > 0) {
           updateData.transcript = transcript;
 

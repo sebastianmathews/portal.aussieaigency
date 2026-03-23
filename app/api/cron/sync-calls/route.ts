@@ -68,6 +68,10 @@ export async function GET(request: NextRequest) {
                 typeof fullConv.metadata?.summary === "string"
                   ? fullConv.metadata.summary
                   : null,
+              recording_url:
+                typeof fullConv.metadata?.recording_url === "string"
+                  ? fullConv.metadata.recording_url
+                  : null,
               created_at: conv.start_time || new Date().toISOString(),
             };
 

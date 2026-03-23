@@ -52,6 +52,7 @@ const navItems = [
   { href: "/dashboard/widget", label: "Website Widget", icon: Code2 },
   { href: "/dashboard/team", label: "Team", icon: UserPlus },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone },
+  { href: "/dashboard/api", label: "API", icon: Code2 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
 ];

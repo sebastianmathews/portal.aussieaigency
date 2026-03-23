@@ -180,6 +180,12 @@ export interface Database {
           recording_url: string | null
           lead_data: Json | null
           appointment_booked: boolean
+          lead_score: number | null
+          intent: string | null
+          sentiment: string | null
+          follow_up_required: boolean
+          ai_summary: string | null
+          suggested_action: string | null
           created_at: string
         }
         Insert: {
@@ -196,6 +202,12 @@ export interface Database {
           recording_url?: string | null
           lead_data?: Json | null
           appointment_booked?: boolean
+          lead_score?: number | null
+          intent?: string | null
+          sentiment?: string | null
+          follow_up_required?: boolean
+          ai_summary?: string | null
+          suggested_action?: string | null
           created_at?: string
         }
         Update: {
@@ -212,6 +224,12 @@ export interface Database {
           recording_url?: string | null
           lead_data?: Json | null
           appointment_booked?: boolean
+          lead_score?: number | null
+          intent?: string | null
+          sentiment?: string | null
+          follow_up_required?: boolean
+          ai_summary?: string | null
+          suggested_action?: string | null
           created_at?: string
         }
         Relationships: [
