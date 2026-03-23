@@ -156,13 +156,78 @@ export async function POST(request: NextRequest) {
           updateData.summary = summary;
         }
 
-        const { error } = await supabase
+        const { error, data: updatedCall } = await supabase
           .from("calls")
           .update(updateData)
-          .eq("elevenlabs_conversation_id", conversation_id);
+          .eq("elevenlabs_conversation_id", conversation_id)
+          .select("organization_id, caller_number, created_at")
+          .maybeSingle();
 
         if (error) {
           console.error("Failed to update call on conversation.completed:", error);
+        }
+
+        // Auto-email transcript to organization owner
+        if (updatedCall?.organization_id && transcript && transcript.length > 0) {
+          try {
+            // Get org owner email
+            const { data: orgProfile } = await supabase
+              .from("profiles")
+              .select("email")
+              .eq("organization_id", updatedCall.organization_id)
+              .limit(1)
+              .single();
+
+            if (orgProfile?.email) {
+              const { Resend } = await import("resend");
+              const resend = new Resend(process.env.RESEND_API_KEY);
+
+              const callerNum = updatedCall.caller_number ?? "Unknown";
+              const callDate = new Date(updatedCall.created_at ?? Date.now())
+                .toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
+
+              const transcriptHtml = transcript
+                .map((t: ElevenLabsTranscriptEntry) => {
+                  const isAi = t.role === "assistant" || t.role === "agent";
+                  const label = isAi ? "AI Agent" : "Caller";
+                  const bg = isAi ? "#f0f4f8" : "#0A1628";
+                  const color = isAi ? "#0A1628" : "#ffffff";
+                  const escaped = t.message
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+                  return `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:#9BA4B5;">${label}</span><div style="background:${bg};color:${color};padding:8px 12px;border-radius:8px;font-size:14px;max-width:80%;display:inline-block;">${escaped}</div></div>`;
+                })
+                .join("");
+
+              await resend.emails.send({
+                from: process.env.RESEND_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
+                to: orgProfile.email,
+                subject: `New Call — ${callerNum} — ${callDate}`,
+                html: `
+                  <div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;">
+                    <div style="background:#0A1628;padding:20px 24px;border-radius:12px 12px 0 0;">
+                      <h2 style="color:#F5A623;margin:0;font-size:18px;">New Call Completed</h2>
+                    </div>
+                    <div style="background:#ffffff;border:1px solid #E8ECF2;border-top:none;padding:24px;border-radius:0 0 12px 12px;">
+                      <table style="width:100%;font-size:14px;margin-bottom:20px;">
+                        <tr><td style="color:#9BA4B5;padding:4px 0;">Caller</td><td style="font-weight:600;">${callerNum}</td></tr>
+                        <tr><td style="color:#9BA4B5;padding:4px 0;">Date</td><td>${callDate}</td></tr>
+                        ${summary ? `<tr><td style="color:#9BA4B5;padding:4px 0;">Summary</td><td>${summary.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td></tr>` : ""}
+                      </table>
+                      <h3 style="color:#0A1628;font-size:14px;margin-bottom:12px;">Full Transcript</h3>
+                      ${transcriptHtml}
+                      <hr style="border:none;border-top:1px solid #E8ECF2;margin:20px 0;" />
+                      <p style="color:#9BA4B5;font-size:11px;text-align:center;">Aussie AI Agency — Your AI receptionist</p>
+                    </div>
+                  </div>
+                `,
+              });
+            }
+          } catch (emailErr) {
+            console.error("Failed to send auto transcript email:", emailErr);
+            // Non-blocking — don't fail the webhook
+          }
         }
 
         break;

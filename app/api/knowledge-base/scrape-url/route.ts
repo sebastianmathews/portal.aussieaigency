@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSafeUrl, checkRateLimit, getClientIp } from "@/lib/security";
+import { addKBDocumentUrl, linkKBToAgent } from "@/lib/elevenlabs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,6 +110,35 @@ export async function POST(request: NextRequest) {
       ? titleMatch[1].replace(/\s+/g, " ").trim()
       : parsedUrl.hostname;
 
+    // Sync URL to ElevenLabs Knowledge Base
+    let elevenlabsDocId: string | null = null;
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileData?.organization_id) {
+      const { data: agent } = await supabase
+        .from("agents")
+        .select("elevenlabs_agent_id")
+        .eq("organization_id", profileData.organization_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (agent?.elevenlabs_agent_id) {
+        try {
+          const kbDoc = await addKBDocumentUrl(title, parsedUrl.toString());
+          elevenlabsDocId = kbDoc.id;
+          await linkKBToAgent(agent.elevenlabs_agent_id, [kbDoc.id]);
+        } catch (kbError) {
+          console.error("Failed to sync URL to ElevenLabs KB:", kbError);
+        }
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -118,6 +148,7 @@ export async function POST(request: NextRequest) {
           url: parsedUrl.toString(),
           content: textContent,
           scrapedAt: new Date().toISOString(),
+          elevenlabsDocId,
         },
       },
       { status: 200 }

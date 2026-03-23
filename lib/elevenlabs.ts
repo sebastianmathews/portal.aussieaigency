@@ -285,6 +285,100 @@ export async function deleteAgent(agentId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Knowledge Base
+// ---------------------------------------------------------------------------
+
+export interface KBDocument {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Upload a text document to ElevenLabs Knowledge Base.
+ */
+export async function addKBDocumentText(
+  name: string,
+  content: string
+): Promise<KBDocument> {
+  const formData = new FormData();
+  const blob = new Blob([content], { type: "text/plain" });
+  formData.append("file", blob, `${name}.txt`);
+  formData.append("name", name);
+
+  const res = await fetch(`${ELEVENLABS_API_BASE}/convai/knowledge-base`, {
+    method: "POST",
+    headers: { "xi-api-key": getApiKey() },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`ElevenLabs KB upload error ${res.status}: ${body}`);
+  }
+
+  return res.json() as Promise<KBDocument>;
+}
+
+/**
+ * Add a URL to ElevenLabs Knowledge Base.
+ */
+export async function addKBDocumentUrl(
+  name: string,
+  url: string
+): Promise<KBDocument> {
+  const formData = new FormData();
+  formData.append("url", url);
+  formData.append("name", name);
+
+  const res = await fetch(`${ELEVENLABS_API_BASE}/convai/knowledge-base`, {
+    method: "POST",
+    headers: { "xi-api-key": getApiKey() },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`ElevenLabs KB URL error ${res.status}: ${body}`);
+  }
+
+  return res.json() as Promise<KBDocument>;
+}
+
+/**
+ * Link a knowledge base document to an agent.
+ */
+export async function linkKBToAgent(
+  agentId: string,
+  kbDocumentIds: string[]
+): Promise<void> {
+  await apiRequest(`/convai/agents/${agentId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      conversation_config: {
+        agent: {
+          prompt: {
+            knowledge_base: kbDocumentIds.map((id) => ({
+              type: "file",
+              id,
+            })),
+          },
+        },
+      },
+    }),
+  });
+}
+
+/**
+ * Delete a knowledge base document.
+ */
+export async function deleteKBDocument(documentId: string): Promise<void> {
+  await apiRequest(`/convai/knowledge-base/${documentId}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Voices
 // ---------------------------------------------------------------------------
 

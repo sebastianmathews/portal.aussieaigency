@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, getClientIp } from "@/lib/security";
+import { addKBDocumentText, linkKBToAgent } from "@/lib/elevenlabs";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -114,10 +115,10 @@ export async function POST(request: NextRequest) {
       textContent = `[Uploaded file: ${file.name}]`;
     }
 
-    // Save to knowledge_items in the agent's knowledge base
+    // Get agent with ElevenLabs ID
     const { data: agent } = await supabase
       .from("agents")
-      .select("id")
+      .select("id, elevenlabs_agent_id")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -130,6 +131,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Upload to ElevenLabs Knowledge Base
+    let elevenlabsDocId: string | null = null;
+    if (agent.elevenlabs_agent_id && textContent.length > 10) {
+      try {
+        const kbDoc = await addKBDocumentText(file.name, textContent);
+        elevenlabsDocId = kbDoc.id;
+
+        // Link document to agent
+        await linkKBToAgent(agent.elevenlabs_agent_id, [kbDoc.id]);
+      } catch (kbError) {
+        console.error("Failed to sync to ElevenLabs KB:", kbError);
+        // Continue — save locally even if ElevenLabs sync fails
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -140,6 +156,7 @@ export async function POST(request: NextRequest) {
           fileType: file.type,
           size: file.size,
           uploadedAt: new Date().toISOString(),
+          elevenlabsDocId,
         },
       },
       { status: 200 }
