@@ -35,51 +35,52 @@ interface Plan {
 
 const PLANS: Plan[] = [
   {
-    id: "starter",
-    name: "Starter",
+    id: "essential",
+    name: "Essential",
     price: 297,
-    minutesIncluded: 500,
+    minutesIncluded: 0, // unlimited
     features: [
-      "1 AI Voice Agent",
-      "500 minutes/month",
-      "Business hours (8am-6pm AEST)",
-      "Call transcripts",
-      "Calendar integration",
-      "Email notifications",
-      "Basic analytics",
+      "Unlimited inbound calls",
+      "24/7 AI receptionist",
+      "Australian voice",
+      "Appointment booking",
+      "Google Calendar sync",
+      "SMS & email notifications",
+      "Call transcripts & recordings",
+      "1 phone number",
     ],
   },
   {
-    id: "growth",
-    name: "Growth",
+    id: "complete",
+    name: "Complete",
     price: 497,
-    minutesIncluded: 1000,
+    minutesIncluded: 0, // unlimited
     features: [
-      "2 AI Voice Agents",
-      "1,000 minutes/month",
-      "24/7 coverage",
-      "Call recordings & transcripts",
+      "Everything in Essential",
+      "AI Chatbot for website",
+      "Lead capture via chat",
       "CRM integration",
-      "SMS notifications",
       "Advanced analytics",
       "Priority support",
+      "Monthly performance review",
+      "2 phone numbers",
     ],
     highlighted: true,
   },
   {
-    id: "scale",
-    name: "Scale",
-    price: 997,
+    id: "enterprise",
+    name: "Enterprise",
+    price: 0,
     minutesIncluded: 0,
     features: [
-      "5 AI Voice Agents",
-      "Unlimited minutes",
-      "24/7 coverage",
-      "Everything in Growth",
-      "Custom voice training",
+      "Everything in Complete",
+      "Multiple locations",
+      "Outbound campaigns",
+      "Custom integrations & API",
       "Dedicated account manager",
-      "White-label option",
-      "API access",
+      "Custom voice training",
+      "White-label options",
+      "SLA guarantee",
     ],
   },
 ];
@@ -335,13 +336,19 @@ function BillingContent() {
                 <CardHeader className="text-center pt-8">
                   <CardTitle className="text-xl">{plan.name}</CardTitle>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">${plan.price}</span>
-                    <span className="text-muted-foreground">/month</span>
+                    {plan.price > 0 ? (
+                      <>
+                        <span className="text-4xl font-bold">${plan.price}</span>
+                        <span className="text-muted-foreground">/month</span>
+                      </>
+                    ) : (
+                      <span className="text-3xl font-bold">Custom</span>
+                    )}
                   </div>
                   <CardDescription className="mt-2">
-                    {plan.minutesIncluded > 0
-                      ? `${plan.minutesIncluded} minutes included`
-                      : "Unlimited minutes"}
+                    {plan.id === "enterprise"
+                      ? "Tailored to your requirements"
+                      : "Unlimited inbound calls"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -358,6 +365,18 @@ function BillingContent() {
                   {isCurrent ? (
                     <Button variant="outline" className="w-full" disabled>
                       Current Plan
+                    </Button>
+                  ) : plan.id === "enterprise" ? (
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => {
+                        window.location.href =
+                          (process.env.NEXT_PUBLIC_SITE_URL || "https://aussieaiagency.com.au") +
+                          "/contact?plan=enterprise";
+                      }}
+                    >
+                      Contact Sales
                     </Button>
                   ) : (
                     <Button

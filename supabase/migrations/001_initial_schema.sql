@@ -70,7 +70,7 @@ create table subscriptions (
   organization_id uuid references organizations(id) on delete cascade unique not null,
   stripe_customer_id text unique not null,
   stripe_subscription_id text unique,
-  plan text default 'starter' check (plan in ('starter', 'growth', 'scale')),
+  plan text default 'essential' check (plan in ('essential', 'complete', 'enterprise')),
   status text default 'trialing' check (status in ('trialing', 'active', 'past_due', 'canceled')),
   minutes_included integer not null,
   minutes_used integer default 0,

@@ -53,14 +53,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Map Stripe price ID to plan using environment variables
-  function mapPlan(priceId: string): { plan: "starter" | "growth" | "scale"; minutes: number } {
-    const priceMap: Record<string, { plan: "starter" | "growth" | "scale"; minutes: number }> = {
-      [process.env.STRIPE_PRICE_STARTER ?? ""]: { plan: "starter", minutes: 500 },
-      [process.env.STRIPE_PRICE_GROWTH ?? ""]: { plan: "growth", minutes: 1000 },
-      [process.env.STRIPE_PRICE_SCALE ?? ""]: { plan: "scale", minutes: 0 }, // unlimited
+  function mapPlan(priceId: string): { plan: string; minutes: number } {
+    const priceMap: Record<string, { plan: string; minutes: number }> = {
+      [process.env.STRIPE_PRICE_ESSENTIAL ?? ""]: { plan: "essential", minutes: 0 },
+      [process.env.STRIPE_PRICE_COMPLETE ?? ""]: { plan: "complete", minutes: 0 },
+      [process.env.STRIPE_PRICE_ENTERPRISE ?? ""]: { plan: "enterprise", minutes: 0 },
     };
 
-    return priceMap[priceId] ?? { plan: "starter", minutes: 500 };
+    return priceMap[priceId] ?? { plan: "essential", minutes: 0 };
   }
 
   try {
@@ -88,23 +88,24 @@ export async function POST(request: NextRequest) {
         const periodStart = subItem?.current_period_start;
         const periodEnd = subItem?.current_period_end;
 
-        const { error } = await supabase.from("subscriptions").upsert(
-          {
-            organization_id: organizationId,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: subscription.id,
-            plan,
-            minutes_included: minutes,
-            status: mapStatus(subscription.status),
-            current_period_start: periodStart
-              ? new Date(periodStart * 1000).toISOString()
-              : null,
-            current_period_end: periodEnd
-              ? new Date(periodEnd * 1000).toISOString()
-              : null,
-          },
-          { onConflict: "organization_id" }
-        );
+        const upsertData = {
+          organization_id: organizationId,
+          stripe_customer_id: session.customer as string,
+          stripe_subscription_id: subscription.id,
+          plan: plan as "essential" | "complete" | "enterprise",
+          minutes_included: minutes,
+          status: mapStatus(subscription.status),
+          current_period_start: periodStart
+            ? new Date(periodStart * 1000).toISOString()
+            : null,
+          current_period_end: periodEnd
+            ? new Date(periodEnd * 1000).toISOString()
+            : null,
+        };
+
+        const { error } = await supabase
+          .from("subscriptions")
+          .upsert(upsertData, { onConflict: "organization_id" });
 
         if (error) {
           console.error("Failed to create subscription record:", error);

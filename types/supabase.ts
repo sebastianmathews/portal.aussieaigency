@@ -235,7 +235,7 @@ export interface Database {
           organization_id: string
           stripe_customer_id: string
           stripe_subscription_id: string | null
-          plan: 'starter' | 'growth' | 'scale'
+          plan: 'essential' | 'complete' | 'enterprise'
           status: 'trialing' | 'active' | 'past_due' | 'canceled'
           minutes_included: number
           minutes_used: number
@@ -249,7 +249,7 @@ export interface Database {
           organization_id: string
           stripe_customer_id: string
           stripe_subscription_id?: string | null
-          plan?: 'starter' | 'growth' | 'scale'
+          plan?: 'essential' | 'complete' | 'enterprise'
           status?: 'trialing' | 'active' | 'past_due' | 'canceled'
           minutes_included: number
           minutes_used?: number
@@ -263,7 +263,7 @@ export interface Database {
           organization_id?: string
           stripe_customer_id?: string
           stripe_subscription_id?: string | null
-          plan?: 'starter' | 'growth' | 'scale'
+          plan?: 'essential' | 'complete' | 'enterprise'
           status?: 'trialing' | 'active' | 'past_due' | 'canceled'
           minutes_included?: number
           minutes_used?: number

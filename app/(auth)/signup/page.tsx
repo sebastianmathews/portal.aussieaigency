@@ -12,9 +12,9 @@ import { Label } from "@/components/ui/label";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://aussieaiagency.com.au";
 
 const PLAN_NAMES: Record<string, string> = {
-  starter: "Starter — $297/mo",
-  growth: "Growth — $497/mo",
-  scale: "Scale — $997/mo",
+  essential: "Essential — $297/mo",
+  complete: "Complete — $497/mo",
+  enterprise: "Enterprise — Custom",
 };
 
 export default function SignupPage() {
