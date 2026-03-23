@@ -107,12 +107,19 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Update call record with conversation_id if we can match by agent
-        // The call may already exist from the Twilio webhook
+        // Update call record with conversation_id
+        // Match by agent's organization to avoid cross-org contamination
+        const { data: agentOrg } = await supabase
+          .from("agents")
+          .select("organization_id")
+          .eq("elevenlabs_agent_id", agent_id)
+          .single();
+
         const { error } = await supabase
           .from("calls")
           .update({ elevenlabs_conversation_id: conversation_id, status: "in_progress" })
           .eq("status", "ringing")
+          .eq("organization_id", agentOrg?.organization_id ?? "")
           .order("created_at", { ascending: false })
           .limit(1);
 

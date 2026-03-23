@@ -49,10 +49,20 @@ export default async function CallDetailPage({
 
   if (!user) redirect("/login");
 
+  // Get user's org for access control
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.organization_id) notFound();
+
   const { data: call } = await supabase
     .from("calls")
     .select("*")
     .eq("id", params.id)
+    .eq("organization_id", profile.organization_id)
     .single();
 
   if (!call) notFound();

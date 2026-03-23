@@ -43,9 +43,11 @@ export const PLANS: Record<string, Plan> = {
     features: [
       "1 AI Voice Agent",
       "500 minutes/month",
-      "Call recording & transcripts",
+      "Business hours (8am-6pm AEST)",
+      "Call transcripts",
+      "Calendar integration",
+      "Email notifications",
       "Basic analytics",
-      "Email support",
     ],
   },
   growth: {
@@ -55,12 +57,14 @@ export const PLANS: Record<string, Plan> = {
     minutes: 1000,
     stripePriceId: process.env.STRIPE_PRICE_GROWTH ?? "",
     features: [
-      "3 AI Voice Agents",
+      "2 AI Voice Agents",
       "1,000 minutes/month",
-      "Call recording & transcripts",
+      "24/7 coverage",
+      "Call recordings & transcripts",
+      "CRM integration",
+      "SMS notifications",
       "Advanced analytics",
       "Priority support",
-      "Custom voice cloning",
     ],
   },
   scale: {
@@ -70,14 +74,14 @@ export const PLANS: Record<string, Plan> = {
     minutes: null,
     stripePriceId: process.env.STRIPE_PRICE_SCALE ?? "",
     features: [
-      "Unlimited AI Voice Agents",
+      "5 AI Voice Agents",
       "Unlimited minutes",
-      "Call recording & transcripts",
-      "Full analytics suite",
+      "24/7 coverage",
+      "Everything in Growth",
+      "Custom voice training",
       "Dedicated account manager",
-      "Custom voice cloning",
-      "API access",
       "White-label option",
+      "API access",
     ],
   },
 } as const;
@@ -91,6 +95,7 @@ export interface CheckoutSessionParams {
   customerId?: string;
   customerEmail?: string;
   userId: string;
+  organizationId: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -114,10 +119,12 @@ export async function createCheckoutSession(
     cancel_url: params.cancelUrl,
     metadata: {
       userId: params.userId,
+      organizationId: params.organizationId,
     },
     subscription_data: {
       metadata: {
         userId: params.userId,
+        organizationId: params.organizationId,
       },
     },
   });

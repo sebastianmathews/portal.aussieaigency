@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       timezone,
     });
 
-    // Insert into agents table
+    // Insert into agents table with ALL fields
     const { data: agentRecord, error: insertError } = await supabase
       .from("agents")
       .insert({
@@ -88,6 +88,14 @@ export async function POST(request: NextRequest) {
         voice_id: voiceId,
         greeting,
         system_prompt: systemPrompt,
+        faqs: faqs ?? [],
+        escalation_number: escalationNumber ?? null,
+        language: language ?? "en",
+        max_call_duration: maxCallDuration ?? 300,
+        call_recording: callRecording ?? false,
+        voice_settings: voiceSettings ?? null,
+        interruptible: interruptible ?? true,
+        timezone: timezone ?? "Australia/Sydney",
       })
       .select()
       .single();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -152,7 +152,8 @@ export default function CallsPage() {
     setCalls((data as Call[]) ?? []);
     setTotal(count ?? 0);
     setLoading(false);
-  }, [page, statusFilter, search, dateFrom, dateTo, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, statusFilter, search, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchCalls();
@@ -375,9 +376,8 @@ export default function CallsPage() {
                     const isExpanded = expandedRow === call.id;
 
                     return (
-                      <>
+                      <React.Fragment key={call.id}>
                         <TableRow
-                          key={call.id}
                           className="cursor-pointer hover:bg-gray-50"
                           onClick={() =>
                             router.push(`/dashboard/calls/${call.id}`)
@@ -510,7 +510,7 @@ export default function CallsPage() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>

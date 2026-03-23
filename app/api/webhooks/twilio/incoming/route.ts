@@ -51,12 +51,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Look up actual agent UUID for FK
+    const { data: agentRecord } = await supabase
+      .from("agents")
+      .select("id")
+      .eq("organization_id", org.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Create call record
     const { error: callError } = await supabase.from("calls").insert({
       twilio_call_sid: callSid,
       organization_id: org.id,
       caller_number: from,
-      agent_id: org.elevenlabs_agent_id ?? "",
+      agent_id: agentRecord?.id ?? "",
       status: "ringing",
     });
 

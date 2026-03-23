@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       priceId: selectedPlan.stripePriceId,
       customerId,
       userId: user.id,
+      organizationId: orgId,
       successUrl: `${baseUrl}/dashboard/billing?success=true`,
       cancelUrl: `${baseUrl}/dashboard/billing?canceled=true`,
     });

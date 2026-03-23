@@ -83,7 +83,8 @@ export default function ContactsPage() {
     setContacts((data ?? []) as Contact[]);
     setTotal(count ?? 0);
     setLoading(false);
-  }, [page, search, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search]);
 
   useEffect(() => {
     fetchContacts();

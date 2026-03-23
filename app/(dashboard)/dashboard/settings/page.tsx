@@ -105,7 +105,8 @@ export default function SettingsPage() {
     }
 
     loadSettings();
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSave = async () => {
     if (!orgId) return;

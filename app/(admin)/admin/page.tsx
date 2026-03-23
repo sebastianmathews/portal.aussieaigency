@@ -83,9 +83,9 @@ export default async function AdminPage() {
 
   // Estimate revenue from active subs
   const planPrices: Record<string, number> = {
-    starter: 99,
-    growth: 249,
-    scale: 499,
+    starter: 297,
+    growth: 497,
+    scale: 997,
   };
   const totalRevenue = (subscriptions ?? [])
     .filter((s) => s.status === "active")

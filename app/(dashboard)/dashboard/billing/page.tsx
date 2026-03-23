@@ -41,9 +41,11 @@ const PLANS: Plan[] = [
     features: [
       "1 AI Voice Agent",
       "500 minutes/month",
-      "Call recording & transcripts",
+      "Business hours (8am-6pm AEST)",
+      "Call transcripts",
+      "Calendar integration",
+      "Email notifications",
       "Basic analytics",
-      "Email support",
     ],
   },
   {
@@ -52,12 +54,14 @@ const PLANS: Plan[] = [
     price: 497,
     minutesIncluded: 1000,
     features: [
-      "3 AI Voice Agents",
+      "2 AI Voice Agents",
       "1,000 minutes/month",
-      "Call recording & transcripts",
+      "24/7 coverage",
+      "Call recordings & transcripts",
+      "CRM integration",
+      "SMS notifications",
       "Advanced analytics",
       "Priority support",
-      "Custom voice cloning",
     ],
     highlighted: true,
   },
@@ -67,14 +71,14 @@ const PLANS: Plan[] = [
     price: 997,
     minutesIncluded: 0,
     features: [
-      "Unlimited AI Voice Agents",
+      "5 AI Voice Agents",
       "Unlimited minutes",
-      "Call recording & transcripts",
-      "Full analytics suite",
+      "24/7 coverage",
+      "Everything in Growth",
+      "Custom voice training",
       "Dedicated account manager",
-      "Custom voice cloning",
-      "API access",
       "White-label option",
+      "API access",
     ],
   },
 ];
@@ -137,11 +141,12 @@ export default function BillingPage() {
     }
 
     loadBilling();
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleManageBilling = async () => {
     try {
-      const response = await fetch("/api/billing/portal", { method: "POST" });
+      const response = await fetch("/api/stripe/create-portal", { method: "POST" });
       const data = await response.json();
       if (data.url) {
         window.location.href = data.url;
@@ -159,10 +164,10 @@ export default function BillingPage() {
 
   const handleUpgrade = async (planId: string) => {
     try {
-      const response = await fetch("/api/billing/checkout", {
+      const response = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ plan: planId }),
       });
       const data = await response.json();
       if (data.url) {

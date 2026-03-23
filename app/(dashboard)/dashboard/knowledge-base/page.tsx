@@ -104,7 +104,7 @@ export default function KnowledgeBasePage() {
         .select("id, faqs, knowledge_items")
         .eq("organization_id", membership.organization_id)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (agent) {
         setAgentId(agent.id);
@@ -122,7 +122,8 @@ export default function KnowledgeBasePage() {
       setLoading(false);
     }
     load();
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Save FAQs
   const saveFaqs = async (updatedFaqs: FaqItem[]) => {
