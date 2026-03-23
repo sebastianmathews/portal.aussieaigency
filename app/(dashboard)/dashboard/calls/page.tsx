@@ -28,7 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Phone, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Phone, Search, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
 import { formatDuration, formatDate, formatPhone } from "@/lib/utils";
 
 const statusVariant: Record<string, "default" | "success" | "destructive" | "warning" | "secondary"> = {
@@ -52,6 +53,7 @@ interface Call {
 export default function CallsPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { toast } = useToast();
 
   const [calls, setCalls] = useState<Call[]>([]);
   const [total, setTotal] = useState(0);
@@ -59,6 +61,7 @@ export default function CallsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   const fetchCalls = useCallback(async () => {
     setLoading(true);
@@ -111,11 +114,53 @@ export default function CallsPage() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-navy-500">Calls History</h1>
-        <p className="text-muted-foreground mt-1">
-          View and manage all incoming calls handled by your AI agent
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-navy-500 font-heading">Calls History</h1>
+          <p className="text-muted-foreground mt-1">
+            View and manage all calls handled by your AI agent
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={syncing}
+          onClick={async () => {
+            setSyncing(true);
+            try {
+              const res = await fetch("/api/elevenlabs/sync-calls", {
+                method: "POST",
+              });
+              const data = await res.json();
+              if (res.ok) {
+                toast({
+                  title: "Calls synced",
+                  description: data.message,
+                });
+                fetchCalls();
+              } else {
+                throw new Error(data.error);
+              }
+            } catch (err) {
+              toast({
+                title: "Sync failed",
+                description:
+                  err instanceof Error ? err.message : "Could not sync calls",
+                variant: "destructive",
+              });
+            } finally {
+              setSyncing(false);
+            }
+          }}
+        >
+          {syncing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Sync Calls
+        </Button>
       </div>
 
       <Card>

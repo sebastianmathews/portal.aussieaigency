@@ -31,8 +31,9 @@ const statusVariant: Record<string, "default" | "success" | "destructive" | "war
 
 interface TranscriptEntry {
   role: string;
-  content: string;
-  timestamp?: string;
+  content?: string;
+  message?: string;
+  timestamp?: string | number;
 }
 
 export default async function CallDetailPage({
@@ -196,7 +197,7 @@ export default async function CallDetailPage({
                       <p className="text-xs font-semibold mb-1 opacity-60">
                         {entry.role === "assistant" ? "AI Agent" : "Caller"}
                       </p>
-                      <p className="text-sm">{entry.content}</p>
+                      <p className="text-sm">{entry.content || entry.message}</p>
                     </div>
                   </div>
                 ))}
