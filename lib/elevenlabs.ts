@@ -43,12 +43,22 @@ async function apiRequest<T>(
 // Types
 // ---------------------------------------------------------------------------
 
+export interface FAQ {
+  question: string;
+  answer: string;
+}
+
 export interface AgentConfig {
   name: string;
   voiceId: string;
   greeting: string;
   systemPrompt: string;
   webhookUrl?: string;
+  language?: string;
+  maxCallDuration?: number;
+  callRecording?: boolean;
+  escalationNumber?: string;
+  faqs?: FAQ[];
 }
 
 export interface Agent {
@@ -94,7 +104,25 @@ export interface ConversationSummary {
 /**
  * Create a new conversational AI agent.
  */
+/**
+ * Build the system prompt with FAQs appended as knowledge.
+ */
+function buildPromptWithFaqs(systemPrompt: string, faqs?: FAQ[]): string {
+  if (!faqs || faqs.length === 0) return systemPrompt;
+
+  const faqBlock = faqs
+    .map((faq) => `Q: ${faq.question}\nA: ${faq.answer}`)
+    .join("\n\n");
+
+  return `${systemPrompt}\n\n---\nFrequently Asked Questions:\n\n${faqBlock}`;
+}
+
+/**
+ * Create a new conversational AI agent.
+ */
 export async function createAgent(config: AgentConfig): Promise<Agent> {
+  const fullPrompt = buildPromptWithFaqs(config.systemPrompt, config.faqs);
+
   return apiRequest<Agent>("/convai/agents/create", {
     method: "POST",
     body: JSON.stringify({
@@ -102,22 +130,35 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
       conversation_config: {
         agent: {
           prompt: {
-            prompt: config.systemPrompt,
+            prompt: fullPrompt,
           },
           first_message: config.greeting,
-          language: "en",
+          language: config.language ?? "en",
+          ...(config.maxCallDuration && {
+            max_duration_seconds: config.maxCallDuration,
+          }),
         },
         tts: {
           voice_id: config.voiceId,
         },
+        ...(config.callRecording && {
+          conversation: {
+            recording: { enabled: true },
+          },
+        }),
       },
-      ...(config.webhookUrl && {
-        platform_settings: {
+      platform_settings: {
+        ...(config.webhookUrl && {
           webhook: {
             url: config.webhookUrl,
           },
-        },
-      }),
+        }),
+        ...(config.escalationNumber && {
+          call_transfer: {
+            phone_number: config.escalationNumber,
+          },
+        }),
+      },
     }),
   });
 }
@@ -139,10 +180,20 @@ export async function updateAgent(
   const agentSection: Record<string, unknown> = {};
 
   if (config.systemPrompt) {
-    agentSection.prompt = { prompt: config.systemPrompt };
+    const fullPrompt = buildPromptWithFaqs(config.systemPrompt, config.faqs);
+    agentSection.prompt = { prompt: fullPrompt };
+  } else if (config.faqs && config.faqs.length > 0) {
+    // FAQs changed but system prompt didn't — we still need to rebuild
+    // This case is handled by always sending systemPrompt from the form
   }
   if (config.greeting) {
     agentSection.first_message = config.greeting;
+  }
+  if (config.language) {
+    agentSection.language = config.language;
+  }
+  if (config.maxCallDuration) {
+    agentSection.max_duration_seconds = config.maxCallDuration;
   }
   if (Object.keys(agentSection).length > 0) {
     conversationConfig.agent = agentSection;
@@ -150,14 +201,26 @@ export async function updateAgent(
   if (config.voiceId) {
     conversationConfig.tts = { voice_id: config.voiceId };
   }
+  if (config.callRecording !== undefined) {
+    conversationConfig.conversation = {
+      recording: { enabled: config.callRecording },
+    };
+  }
   if (Object.keys(conversationConfig).length > 0) {
     body.conversation_config = conversationConfig;
   }
 
+  const platformSettings: Record<string, unknown> = {};
   if (config.webhookUrl) {
-    body.platform_settings = {
-      webhook: { url: config.webhookUrl },
+    platformSettings.webhook = { url: config.webhookUrl };
+  }
+  if (config.escalationNumber) {
+    platformSettings.call_transfer = {
+      phone_number: config.escalationNumber,
     };
+  }
+  if (Object.keys(platformSettings).length > 0) {
+    body.platform_settings = platformSettings;
   }
 
   return apiRequest<Agent>(`/convai/agents/${agentId}`, {

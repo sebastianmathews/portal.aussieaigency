@@ -25,6 +25,10 @@ export async function PUT(request: NextRequest) {
       faqs,
       escalationNumber,
       businessHours,
+      language,
+      maxCallDuration,
+      callRecording,
+      webhookUrl,
     } = body;
 
     if (!agentId) {
@@ -63,14 +67,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update agent via ElevenLabs API
-    const updateConfig: Record<string, string> = {};
-    if (name) updateConfig.name = name;
-    if (voiceId) updateConfig.voiceId = voiceId;
-    if (greeting) updateConfig.greeting = greeting;
-    if (systemPrompt) updateConfig.systemPrompt = systemPrompt;
-
-    await updateAgent(agentId, updateConfig);
+    // Update agent via ElevenLabs API with all config
+    await updateAgent(agentId, {
+      name,
+      voiceId,
+      greeting,
+      systemPrompt,
+      faqs,
+      escalationNumber,
+      language,
+      maxCallDuration,
+      callRecording,
+      webhookUrl,
+    });
 
     // Update local agents table
     const localUpdate: Record<string, unknown> = {};
@@ -83,6 +92,11 @@ export async function PUT(request: NextRequest) {
       localUpdate.escalation_number = escalationNumber;
     if (businessHours !== undefined)
       localUpdate.business_hours = businessHours;
+    if (language !== undefined) localUpdate.language = language;
+    if (maxCallDuration !== undefined)
+      localUpdate.max_call_duration = maxCallDuration;
+    if (callRecording !== undefined)
+      localUpdate.call_recording = callRecording;
 
     localUpdate.updated_at = new Date().toISOString();
 

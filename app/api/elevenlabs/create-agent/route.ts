@@ -16,7 +16,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, voiceId, greeting, systemPrompt } = body;
+    const {
+      name,
+      voiceId,
+      greeting,
+      systemPrompt,
+      language,
+      maxCallDuration,
+      callRecording,
+      escalationNumber,
+      faqs,
+    } = body;
 
     if (!name || !voiceId || !greeting || !systemPrompt) {
       return NextResponse.json(
@@ -55,6 +65,11 @@ export async function POST(request: NextRequest) {
       greeting,
       systemPrompt,
       webhookUrl,
+      language,
+      maxCallDuration,
+      callRecording,
+      escalationNumber,
+      faqs,
     });
 
     // Insert into agents table
