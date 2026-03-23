@@ -48,7 +48,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (user && (pathname === "/login" || pathname === "/signup")) {
+  if (
+    user &&
+    (pathname === "/login" || pathname === "/signup") &&
+    !pathname.startsWith("/reset-password")
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
@@ -58,5 +62,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/signup", "/forgot-password", "/reset-password"],
 };
