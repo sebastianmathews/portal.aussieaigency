@@ -9,10 +9,12 @@ import {
   Phone,
   BookOpen,
   Users,
+  UserPlus,
   Megaphone,
   Settings,
   CreditCard,
   Code2,
+  Shield,
   LogOut,
   Menu,
   X,
@@ -47,6 +49,7 @@ const navItems = [
   { href: "/dashboard/knowledge-base", label: "Knowledge Base", icon: BookOpen },
   { href: "/dashboard/contacts", label: "Contacts", icon: Users },
   { href: "/dashboard/widget", label: "Website Widget", icon: Code2 },
+  { href: "/dashboard/team", label: "Team", icon: UserPlus },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
@@ -111,6 +114,28 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
           );
         })}
       </nav>
+
+      {/* Admin link — only for admin role */}
+      {user.role === "admin" && (
+        <div className="px-3 pb-2">
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all relative",
+              pathname.startsWith("/admin")
+                ? "bg-red-50 text-red-700"
+                : "text-gray-500 hover:bg-gray-50 hover:text-[#0A1628]"
+            )}
+          >
+            <Shield className={cn(
+              "h-[18px] w-[18px] flex-shrink-0",
+              pathname.startsWith("/admin") ? "text-red-500" : "text-gray-400"
+            )} />
+            Admin Panel
+          </Link>
+        </div>
+      )}
 
       {/* User info */}
       <div className="border-t border-gray-100 p-4">
