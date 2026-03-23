@@ -34,9 +34,10 @@ function SignupForm() {
   const isTrial = searchParams.get("trial") === "true";
   const planId = searchParams.get("plan");
 
-  const [fullName, setFullName] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [email, setEmail] = useState("");
+  // Pre-fill from marketing site form (query params)
+  const [fullName, setFullName] = useState(searchParams.get("name") ?? "");
+  const [businessName, setBusinessName] = useState(searchParams.get("business") ?? "");
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,27 +71,18 @@ function SignupForm() {
       }
 
       if (data.user) {
-        const { data: orgData, error: orgError } = await supabase
-          .from("organizations")
-          .insert({ name: businessName })
-          .select()
-          .single();
+        // Create org + profile via server-side API (bypasses RLS)
+        const completeRes = await fetch("/api/auth/signup-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessName,
+            fullName,
+          }),
+        });
 
-        if (orgError) {
-          console.error("Error creating organization:", orgError);
-        }
-
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: data.user.id,
-            full_name: fullName,
-            email: email,
-            organization_id: orgData?.id,
-          });
-
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
+        if (!completeRes.ok) {
+          console.error("Failed to complete signup setup");
         }
       }
 

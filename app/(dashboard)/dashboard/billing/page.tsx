@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   Card,
@@ -84,8 +85,35 @@ const PLANS: Plan[] = [
 ];
 
 export default function BillingPage() {
+  return (
+    <Suspense>
+      <BillingContent />
+    </Suspense>
+  );
+}
+
+function BillingContent() {
   const supabase = createClient();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  // Show success/canceled toast from Stripe redirect
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast({
+        title: "Subscription activated!",
+        description: "Your plan is now active. Welcome aboard!",
+      });
+      window.history.replaceState({}, "", "/dashboard/billing");
+    } else if (searchParams.get("canceled") === "true") {
+      toast({
+        title: "Checkout canceled",
+        description: "No changes were made to your subscription.",
+      });
+      window.history.replaceState({}, "", "/dashboard/billing");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [loading, setLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
@@ -249,14 +277,22 @@ export default function BillingPage() {
           <CardHeader>
             <CardTitle className="text-lg">Minutes Usage</CardTitle>
             <CardDescription>
-              {minutesUsed} of {minutesIncluded} minutes used this cycle
+              {minutesIncluded > 0
+                ? `${minutesUsed} of ${minutesIncluded} minutes used this cycle`
+                : `${minutesUsed} minutes used this cycle (unlimited plan)`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Progress value={minutesUsed} max={minutesIncluded} />
+            {minutesIncluded > 0 ? (
+              <Progress value={minutesUsed} max={minutesIncluded} />
+            ) : (
+              <div className="h-2 rounded-full bg-green-100" />
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
-                {Math.max(0, minutesIncluded - minutesUsed)} minutes remaining
+                {minutesIncluded > 0
+                  ? `${Math.max(0, minutesIncluded - minutesUsed)} minutes remaining`
+                  : "Unlimited minutes"}
               </span>
               <span className="font-medium">
                 {minutesIncluded > 0

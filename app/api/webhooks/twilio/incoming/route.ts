@@ -60,17 +60,21 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    // Create call record
-    const { error: callError } = await supabase.from("calls").insert({
-      twilio_call_sid: callSid,
-      organization_id: org.id,
-      caller_number: from,
-      agent_id: agentRecord?.id ?? "",
-      status: "ringing",
-    });
+    // Create call record (only if agent exists with valid UUID)
+    if (agentRecord?.id) {
+      const { error: callError } = await supabase.from("calls").insert({
+        twilio_call_sid: callSid,
+        organization_id: org.id,
+        caller_number: from,
+        agent_id: agentRecord.id,
+        status: "ringing",
+      });
 
-    if (callError) {
-      console.error("Failed to create call record:", callError);
+      if (callError) {
+        console.error("Failed to create call record:", callError);
+      }
+    } else {
+      console.error("No agent found for org:", org.id);
     }
 
     const twiml = new twilio.twiml.VoiceResponse();

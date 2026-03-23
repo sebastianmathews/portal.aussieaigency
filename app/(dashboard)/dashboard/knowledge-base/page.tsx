@@ -127,7 +127,14 @@ export default function KnowledgeBasePage() {
 
   // Save FAQs
   const saveFaqs = async (updatedFaqs: FaqItem[]) => {
-    if (!agentId) return;
+    if (!agentId) {
+      toast({
+        title: "Create an agent first",
+        description: "Go to Agents and create your AI agent before adding to the knowledge base.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
 
     const { error } = await supabase
