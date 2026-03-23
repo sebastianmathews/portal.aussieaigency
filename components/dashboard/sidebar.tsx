@@ -23,6 +23,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn, getInitials } from "@/lib/utils";
+import { NotificationsDropdown } from "@/components/dashboard/notifications";
 
 interface UserProfile {
   id: string;
@@ -114,6 +115,11 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
           );
         })}
       </nav>
+
+      {/* Notifications */}
+      <div className="px-4 pb-2 flex justify-end">
+        <NotificationsDropdown />
+      </div>
 
       {/* Admin link — only for admin role */}
       {user.role === "admin" && (
