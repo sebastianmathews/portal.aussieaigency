@@ -4,6 +4,7 @@ import { AgentForm } from "@/components/agent/agent-form";
 import { TestAgent } from "@/components/agent/test-agent";
 import { type BusinessHoursData } from "@/components/agent/business-hours";
 import { type FAQ } from "@/components/agent/faq-editor";
+import { DEFAULT_VOICE_SETTINGS, type VoiceSettingsData } from "@/components/agent/voice-settings";
 import { Bot, Sparkles } from "lucide-react";
 
 export default async function AgentPage() {
@@ -134,6 +135,7 @@ export default async function AgentPage() {
                 maxCallDuration: agent.max_call_duration ?? 300,
                 webhookUrl: agent.webhook_url ?? "",
                 callRecording: agent.call_recording ?? false,
+                voiceSettings: (agent.voice_settings as unknown as VoiceSettingsData) ?? DEFAULT_VOICE_SETTINGS,
               }
             : null
         }

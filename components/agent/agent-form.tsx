@@ -25,6 +25,11 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { VoiceSelector } from "@/components/agent/voice-selector";
 import {
+  VoiceSettings,
+  DEFAULT_VOICE_SETTINGS,
+  type VoiceSettingsData,
+} from "@/components/agent/voice-settings";
+import {
   BusinessHours,
   DEFAULT_BUSINESS_HOURS,
   type BusinessHoursData,
@@ -56,6 +61,7 @@ export interface AgentData {
   maxCallDuration: number;
   webhookUrl: string;
   callRecording: boolean;
+  voiceSettings: VoiceSettingsData;
 }
 
 interface AgentFormProps {
@@ -106,6 +112,9 @@ export function AgentForm({ agent }: AgentFormProps) {
   const [webhookUrl, setWebhookUrl] = useState(agent?.webhookUrl ?? "");
   const [callRecording, setCallRecording] = useState(
     agent?.callRecording ?? false
+  );
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettingsData>(
+    agent?.voiceSettings ?? DEFAULT_VOICE_SETTINGS
   );
   const [saving, setSaving] = useState(false);
 
@@ -166,6 +175,7 @@ export function AgentForm({ agent }: AgentFormProps) {
         maxCallDuration,
         webhookUrl: webhookUrl.trim(),
         callRecording,
+        voiceSettings,
         ...(agent ? { agentId: agent.elevenlabsAgentId } : {}),
       };
 
@@ -337,6 +347,26 @@ export function AgentForm({ agent }: AgentFormProps) {
               </CardHeader>
               <CardContent>
                 <VoiceSelector value={voiceId} onChange={setVoiceId} />
+              </CardContent>
+            </Card>
+
+            {/* Voice settings card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sliders className="h-5 w-5 text-[#F5A623]" />
+                  Voice Tuning
+                </CardTitle>
+                <CardDescription>
+                  Fine-tune how your agent&apos;s voice sounds. Adjust warmth,
+                  clarity, expressiveness, and speed.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <VoiceSettings
+                  value={voiceSettings}
+                  onChange={setVoiceSettings}
+                />
               </CardContent>
             </Card>
 

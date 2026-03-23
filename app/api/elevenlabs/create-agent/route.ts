@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       callRecording,
       escalationNumber,
       faqs,
+      voiceSettings,
     } = body;
 
     if (!name || !voiceId || !greeting || !systemPrompt) {
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       callRecording,
       escalationNumber,
       faqs,
+      voiceSettings,
     });
 
     // Insert into agents table

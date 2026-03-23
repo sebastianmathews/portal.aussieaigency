@@ -10,6 +10,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "DM Sans", "sans-serif"],
+        heading: ["var(--font-heading)", "Space Grotesk", "sans-serif"],
+      },
       colors: {
         // Brand colors
         navy: {

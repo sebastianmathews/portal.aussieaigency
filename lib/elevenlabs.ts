@@ -48,6 +48,14 @@ export interface FAQ {
   answer: string;
 }
 
+export interface VoiceSettings {
+  stability?: number;
+  similarityBoost?: number;
+  style?: number;
+  speed?: number;
+  useSpeakerBoost?: boolean;
+}
+
 export interface AgentConfig {
   name: string;
   voiceId: string;
@@ -59,6 +67,7 @@ export interface AgentConfig {
   callRecording?: boolean;
   escalationNumber?: string;
   faqs?: FAQ[];
+  voiceSettings?: VoiceSettings;
 }
 
 export interface Agent {
@@ -105,6 +114,24 @@ export interface ConversationSummary {
  * Create a new conversational AI agent.
  */
 /**
+ * Build TTS voice settings payload for ElevenLabs API.
+ */
+function buildTtsConfig(voiceId: string, settings?: VoiceSettings) {
+  return {
+    voice_id: voiceId,
+    ...(settings && {
+      voice_settings: {
+        stability: settings.stability ?? 0.5,
+        similarity_boost: settings.similarityBoost ?? 0.75,
+        style: settings.style ?? 0,
+        speed: settings.speed ?? 1.0,
+        use_speaker_boost: settings.useSpeakerBoost ?? true,
+      },
+    }),
+  };
+}
+
+/**
  * Build the system prompt with FAQs appended as knowledge.
  */
 function buildPromptWithFaqs(systemPrompt: string, faqs?: FAQ[]): string {
@@ -138,9 +165,7 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
             max_duration_seconds: config.maxCallDuration,
           }),
         },
-        tts: {
-          voice_id: config.voiceId,
-        },
+        tts: buildTtsConfig(config.voiceId, config.voiceSettings),
         ...(config.callRecording && {
           conversation: {
             recording: { enabled: true },
@@ -198,8 +223,11 @@ export async function updateAgent(
   if (Object.keys(agentSection).length > 0) {
     conversationConfig.agent = agentSection;
   }
-  if (config.voiceId) {
-    conversationConfig.tts = { voice_id: config.voiceId };
+  if (config.voiceId || config.voiceSettings) {
+    conversationConfig.tts = buildTtsConfig(
+      config.voiceId ?? "",
+      config.voiceSettings
+    );
   }
   if (config.callRecording !== undefined) {
     conversationConfig.conversation = {

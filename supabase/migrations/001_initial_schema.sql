@@ -38,6 +38,7 @@ create table agents (
   max_call_duration integer default 300,
   webhook_url text,
   call_recording boolean default true,
+  voice_settings jsonb,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );

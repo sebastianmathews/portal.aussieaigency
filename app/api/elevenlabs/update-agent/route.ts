@@ -29,6 +29,7 @@ export async function PUT(request: NextRequest) {
       maxCallDuration,
       callRecording,
       webhookUrl,
+      voiceSettings,
     } = body;
 
     if (!agentId) {
@@ -79,6 +80,7 @@ export async function PUT(request: NextRequest) {
       maxCallDuration,
       callRecording,
       webhookUrl,
+      voiceSettings,
     });
 
     // Update local agents table
@@ -97,6 +99,8 @@ export async function PUT(request: NextRequest) {
       localUpdate.max_call_duration = maxCallDuration;
     if (callRecording !== undefined)
       localUpdate.call_recording = callRecording;
+    if (voiceSettings !== undefined)
+      localUpdate.voice_settings = voiceSettings;
 
     localUpdate.updated_at = new Date().toISOString();
 
