@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { FloatingTestWidget } from "@/components/dashboard/floating-test";
 
 export default async function DashboardLayout({
   children,
@@ -62,6 +63,9 @@ export default async function DashboardLayout({
           {children}
         </div>
       </main>
+
+      {/* Floating test widget — visible on all dashboard pages */}
+      <FloatingTestWidget />
     </div>
   );
 }
