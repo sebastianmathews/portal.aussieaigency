@@ -54,6 +54,8 @@ export interface VoiceSettings {
   style?: number;
   speed?: number;
   useSpeakerBoost?: boolean;
+  expressiveMode?: boolean;
+  audioTags?: string[];
 }
 
 export interface AgentConfig {
@@ -119,18 +121,28 @@ export interface ConversationSummary {
  * Build TTS voice settings payload for ElevenLabs API.
  */
 function buildTtsConfig(voiceId: string, settings?: VoiceSettings) {
-  return {
+  const tts: Record<string, unknown> = {
     voice_id: voiceId,
-    ...(settings && {
-      voice_settings: {
-        stability: settings.stability ?? 0.5,
-        similarity_boost: settings.similarityBoost ?? 0.75,
-        style: settings.style ?? 0,
-        speed: settings.speed ?? 1.0,
-        use_speaker_boost: settings.useSpeakerBoost ?? true,
-      },
-    }),
   };
+
+  if (settings) {
+    tts.voice_settings = {
+      stability: settings.stability ?? 0.5,
+      similarity_boost: settings.similarityBoost ?? 0.75,
+      style: settings.style ?? 0,
+      speed: settings.speed ?? 1.0,
+      use_speaker_boost: settings.useSpeakerBoost ?? true,
+    };
+
+    // Audio tags for v3 models (up to 20)
+    if (settings.audioTags && settings.audioTags.length > 0) {
+      tts.suggested_audio_tags = settings.audioTags.map((tag) => ({
+        tag,
+      }));
+    }
+  }
+
+  return tts;
 }
 
 /**
@@ -375,6 +387,36 @@ export async function linkKBToAgent(
 export async function deleteKBDocument(documentId: string): Promise<void> {
   await apiRequest(`/convai/knowledge-base/${documentId}`, {
     method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Phone Numbers (Twilio via ElevenLabs)
+// ---------------------------------------------------------------------------
+
+/**
+ * Register a Twilio phone number with ElevenLabs so they handle call routing.
+ * This uses ElevenLabs' native Twilio integration — no custom webhooks needed.
+ */
+export async function registerPhoneNumber(
+  phoneNumber: string,
+  agentId: string,
+  twilioAccountSid: string,
+  twilioAuthToken: string,
+  label?: string
+): Promise<{ phone_number_id: string }> {
+  return apiRequest<{ phone_number_id: string }>("/convai/phone-numbers/create", {
+    method: "POST",
+    body: JSON.stringify({
+      phone_number: phoneNumber,
+      agent_id: agentId,
+      provider: "twilio",
+      label: label || phoneNumber,
+      twilio_config: {
+        account_sid: twilioAccountSid,
+        auth_token: twilioAuthToken,
+      },
+    }),
   });
 }
 

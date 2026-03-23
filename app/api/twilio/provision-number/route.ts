@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { searchAvailableNumbers, provisionNumber } from "@/lib/twilio";
+import { registerPhoneNumber } from "@/lib/elevenlabs";
 import { checkRateLimit, getClientIp } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
@@ -73,6 +74,8 @@ export async function POST(request: NextRequest) {
       numberToProvision = availableNumbers[0].phoneNumber;
     }
 
+    // Provision via Twilio (purchase the number)
+    // Use ElevenLabs webhook URL so they handle call routing natively
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     const webhookUrl = `${baseUrl}/api/webhooks/twilio/incoming`;
 
@@ -80,6 +83,35 @@ export async function POST(request: NextRequest) {
       numberToProvision,
       webhookUrl
     );
+
+    // Register phone number with ElevenLabs for native Twilio integration
+    // This lets ElevenLabs handle call routing directly — more robust
+    const { data: agent } = await supabase
+      .from("agents")
+      .select("elevenlabs_agent_id")
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (agent?.elevenlabs_agent_id) {
+      try {
+        const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+        const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+        if (twilioSid && twilioToken) {
+          await registerPhoneNumber(
+            provisioned.phoneNumber,
+            agent.elevenlabs_agent_id,
+            twilioSid,
+            twilioToken,
+            `${orgId} - AI Agent`
+          );
+        }
+      } catch (elError) {
+        console.error("Failed to register number with ElevenLabs:", elError);
+        // Non-blocking — Twilio webhook fallback still works
+      }
+    }
 
     // Update organization with the new Twilio number
     const { error: updateError } = await supabase
