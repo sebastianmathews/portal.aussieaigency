@@ -120,7 +120,7 @@ function BillingContent() {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [minutesUsed, setMinutesUsed] = useState(0);
-  const [minutesIncluded, setMinutesIncluded] = useState(500);
+  const [minutesIncluded, setMinutesIncluded] = useState(0);
 
   useEffect(() => {
     async function loadBilling() {
@@ -152,7 +152,7 @@ function BillingContent() {
       if (sub) {
         setCurrentPlan(sub.plan);
         setSubscriptionStatus(sub.status);
-        setMinutesIncluded(sub.minutes_included ?? 500);
+        setMinutesIncluded(sub.minutes_included ?? 0);
       }
 
       // Get usage

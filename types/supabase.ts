@@ -25,6 +25,8 @@ export interface Database {
           forwarding_number: string | null
           elevenlabs_agent_id: string | null
           timezone: string
+          google_refresh_token: string | null
+          google_connected: boolean
           created_at: string
           updated_at: string
         }
@@ -36,6 +38,8 @@ export interface Database {
           forwarding_number?: string | null
           elevenlabs_agent_id?: string | null
           timezone?: string
+          google_refresh_token?: string | null
+          google_connected?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -47,6 +51,8 @@ export interface Database {
           forwarding_number?: string | null
           elevenlabs_agent_id?: string | null
           timezone?: string
+          google_refresh_token?: string | null
+          google_connected?: boolean
           created_at?: string
           updated_at?: string
         }

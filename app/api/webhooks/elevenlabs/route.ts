@@ -137,12 +137,6 @@ export async function POST(request: NextRequest) {
             .eq("id", ringCall.id);
         }
 
-        const error = null; // preserve variable for existing error check
-
-        if (error) {
-          console.error("Failed to update call with conversation_id:", error);
-        }
-
         break;
       }
 

@@ -117,12 +117,16 @@ export async function POST(request: NextRequest) {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         const updSubItem = subscription.items.data[0];
+        const updPriceId = updSubItem?.price.id ?? "";
+        const updPlan = mapPlan(updPriceId);
         const updPeriodStart = updSubItem?.current_period_start;
         const updPeriodEnd = updSubItem?.current_period_end;
 
         const { error } = await supabase
           .from("subscriptions")
           .update({
+            plan: updPlan.plan as "essential" | "complete" | "enterprise",
+            minutes_included: updPlan.minutes,
             status: mapStatus(subscription.status),
             current_period_start: updPeriodStart
               ? new Date(updPeriodStart * 1000).toISOString()

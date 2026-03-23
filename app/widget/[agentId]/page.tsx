@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 
 type ConversationStatus = "idle" | "connecting" | "connected" | "disconnecting";
-type InputMode = "voice" | "text";
 
 interface TranscriptMessage {
   role: "agent" | "user";
@@ -16,10 +15,8 @@ export default function WidgetPage() {
   const agentId = params.agentId as string;
 
   const [status, setStatus] = useState<ConversationStatus>("idle");
-  const [inputMode, setInputMode] = useState<InputMode>("text");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
-  const [textInput, setTextInput] = useState("");
   const [minimized, setMinimized] = useState(true);
   const [conversationInstance, setConversationInstance] = useState<{
     endSession: () => Promise<void>;
@@ -221,32 +218,8 @@ export default function WidgetPage() {
           )}
         </div>
 
-        {/* Input area */}
+        {/* Voice controls */}
         <div style={styles.inputArea}>
-          <div style={styles.modeToggle}>
-            <button
-              onClick={() => setInputMode("text")}
-              style={
-                inputMode === "text"
-                  ? styles.modeActive
-                  : styles.modeInactive
-              }
-            >
-              Chat
-            </button>
-            <button
-              onClick={() => setInputMode("voice")}
-              style={
-                inputMode === "voice"
-                  ? styles.modeActive
-                  : styles.modeInactive
-              }
-            >
-              Voice
-            </button>
-          </div>
-
-          {inputMode === "voice" ? (
             <div style={styles.voiceArea}>
               {status === "connected" ? (
                 <button onClick={endConversation} style={styles.endCallBtn}>
@@ -282,42 +255,6 @@ export default function WidgetPage() {
                 </button>
               )}
             </div>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (textInput.trim()) {
-                  setTranscript((prev) => [
-                    ...prev,
-                    { role: "user", text: textInput.trim() },
-                  ]);
-                  setTextInput("");
-                }
-              }}
-              style={styles.textForm}
-            >
-              <input
-                type="text"
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                placeholder="Type a message..."
-                style={styles.textInput}
-              />
-              <button type="submit" style={styles.sendBtn}>
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                >
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
-            </form>
-          )}
         </div>
 
         {/* Branding */}

@@ -47,7 +47,7 @@ export default async function DashboardLayout({
     id: user.id,
     full_name: profile?.full_name ?? null,
     email: profile?.email ?? user.email ?? "",
-    role: profile?.role ?? "member",
+    role: profile?.role ?? "client",
     avatar_url: null,
   };
 

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     if (!plan || !PLANS[plan]) {
       return NextResponse.json(
-        { error: "Invalid plan. Must be one of: starter, growth, scale" },
+        { error: "Invalid plan. Must be one of: essential, complete, enterprise" },
         { status: 400 }
       );
     }

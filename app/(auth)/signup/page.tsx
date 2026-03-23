@@ -51,14 +51,14 @@ function SignupForm() {
     try {
       const supabase = createClient();
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
             business_name: businessName,
-            plan: planId || "starter",
+            plan: planId || "essential",
             trial: isTrial,
           },
           emailRedirectTo: `${window.location.origin}/callback`,
@@ -70,21 +70,8 @@ function SignupForm() {
         return;
       }
 
-      if (data.user) {
-        // Create org + profile via server-side API (bypasses RLS)
-        const completeRes = await fetch("/api/auth/signup-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            businessName,
-            fullName,
-          }),
-        });
-
-        if (!completeRes.ok) {
-          console.error("Failed to complete signup setup");
-        }
-      }
+      // Org + profile creation happens in /callback after email verification
+      // (user has no session yet, so we can't call server APIs here)
 
       setSuccess(true);
     } catch {

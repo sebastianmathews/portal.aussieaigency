@@ -11,14 +11,9 @@
   var iframe = document.createElement("iframe");
   iframe.src = baseUrl + "/widget/" + agentId;
   iframe.style.cssText =
-    "position:fixed;bottom:0;right:0;width:420px;height:620px;border:none;z-index:99999;background:transparent;pointer-events:none;";
+    "position:fixed;bottom:0;right:0;width:420px;height:620px;border:none;z-index:99999;background:transparent;pointer-events:auto;";
   iframe.setAttribute("allow", "microphone");
-  iframe.setAttribute("title", "AI Chat Widget");
-
-  // Allow clicks to pass through to the widget
-  iframe.addEventListener("load", function () {
-    iframe.style.pointerEvents = "auto";
-  });
+  iframe.setAttribute("title", "AI Voice Widget");
 
   document.body.appendChild(iframe);
 })();

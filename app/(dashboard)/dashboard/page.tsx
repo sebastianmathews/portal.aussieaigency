@@ -115,7 +115,7 @@ export default async function DashboardPage() {
     .eq("status", "active")
     .single();
 
-  const minutesIncluded = subscription?.minutes_included ?? 500;
+  const minutesIncluded = subscription?.minutes_included ?? 0;
 
   // Onboarding checks
   const { data: profile } = await supabase

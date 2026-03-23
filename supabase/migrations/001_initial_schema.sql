@@ -125,6 +125,8 @@ alter table profiles enable row level security;
 alter table agents enable row level security;
 alter table calls enable row level security;
 alter table subscriptions enable row level security;
+alter table campaigns enable row level security;
+alter table campaign_calls enable row level security;
 
 -- Policies (users can only see their own org data)
 create policy "Users can view own organization"
@@ -135,9 +137,12 @@ create policy "Users can update own organization"
   on organizations for update
   using (id = (select organization_id from profiles where id = auth.uid()));
 
-create policy "Users can view own profile"
+create policy "Users can view own profile and team members"
   on profiles for select
-  using (id = auth.uid());
+  using (
+    id = auth.uid()
+    OR organization_id = (select organization_id from profiles where id = auth.uid())
+  );
 
 create policy "Users can update own profile"
   on profiles for update
@@ -186,6 +191,27 @@ create policy "Admins can manage all calls"
 
 create policy "Admins can manage all subscriptions"
   on subscriptions for all
+  using ((select role from profiles where id = auth.uid()) = 'admin');
+
+-- Campaign policies
+create policy "Users can view own campaigns"
+  on campaigns for select
+  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+
+create policy "Users can manage own campaigns"
+  on campaigns for all
+  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+
+create policy "Users can view own campaign calls"
+  on campaign_calls for select
+  using (campaign_id in (select id from campaigns where organization_id = (select organization_id from profiles where id = auth.uid())));
+
+create policy "Admins can manage all campaigns"
+  on campaigns for all
+  using ((select role from profiles where id = auth.uid()) = 'admin');
+
+create policy "Admins can manage all campaign calls"
+  on campaign_calls for all
   using ((select role from profiles where id = auth.uid()) = 'admin');
 
 -- Service role bypass for webhooks (service role bypasses RLS by default)

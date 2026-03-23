@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify both users are in the same org
+    // Verify requester has admin/owner privileges
     const { data: myProfile } = await supabase
       .from("profiles")
-      .select("organization_id")
+      .select("organization_id, role, created_at")
       .eq("id", user.id)
       .single();
 
@@ -46,6 +46,26 @@ export async function POST(request: NextRequest) {
         { error: "No organization found" },
         { status: 404 }
       );
+    }
+
+    // Only admin role can remove members
+    if (myProfile.role !== "admin") {
+      // Check if user is the org owner (earliest member)
+      const admin2 = createAdminClient();
+      const { data: firstMember } = await admin2
+        .from("profiles")
+        .select("id")
+        .eq("organization_id", orgId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (firstMember?.id !== user.id) {
+        return NextResponse.json(
+          { error: "Only the organization owner or admin can remove members" },
+          { status: 403 }
+        );
+      }
     }
 
     const admin = createAdminClient();
