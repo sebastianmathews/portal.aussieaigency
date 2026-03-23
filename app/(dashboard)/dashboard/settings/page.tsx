@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { Building2, Save, Loader2 } from "lucide-react";
+import { Building2, Save, Loader2, Calendar, CheckCircle2, ExternalLink } from "lucide-react";
 import { PhoneNumberPicker } from "@/components/settings/phone-number-picker";
 
 const TIMEZONES = [
@@ -67,6 +67,7 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("Australia/Sydney");
   const [twilioNumber, setTwilioNumber] = useState("");
   const [forwardingNumber, setForwardingNumber] = useState("");
+  const [googleConnected, setGoogleConnected] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -99,6 +100,7 @@ export default function SettingsPage() {
         setTimezone(org.timezone ?? "Australia/Sydney");
         setTwilioNumber(org.twilio_number ?? "");
         setForwardingNumber(org.forwarding_number ?? "");
+        setGoogleConnected(!!(org as Record<string, unknown>).google_connected);
       }
 
       setLoading(false);
@@ -243,6 +245,57 @@ export default function SettingsPage() {
               Your mobile or office number for human escalation.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Google Calendar Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Calendar className="h-5 w-5 text-[#F5A623]" />
+            Google Calendar
+          </CardTitle>
+          <CardDescription>
+            Connect Google Calendar so your AI agent can automatically book
+            appointments for callers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {googleConnected ? (
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-green-50 border-green-200">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-sm">Google Calendar connected</p>
+                  <p className="text-xs text-muted-foreground">
+                    Your AI agent can book appointments automatically.
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/api/integrations/google/connect">
+                  Reconnect
+                </a>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed border-gray-200 text-center">
+              <Calendar className="h-10 w-10 text-[#F5A623] mb-3" />
+              <p className="font-medium text-[#0A1628] mb-1">
+                Connect your Google Calendar
+              </p>
+              <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                Allow your AI agent to check availability and book
+                appointments directly into your calendar.
+              </p>
+              <Button variant="gold" className="gap-2" asChild>
+                <a href="/api/integrations/google/connect">
+                  <ExternalLink className="h-4 w-4" />
+                  Connect Google Calendar
+                </a>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

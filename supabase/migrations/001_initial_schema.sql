@@ -7,6 +7,8 @@ create table organizations (
   forwarding_number text,
   elevenlabs_agent_id text,
   timezone text default 'Australia/Sydney',
+  google_refresh_token text,
+  google_connected boolean default false,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
