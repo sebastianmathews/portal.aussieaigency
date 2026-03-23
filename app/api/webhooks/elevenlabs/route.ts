@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { analyzeCall } from "@/lib/call-analysis";
 
 interface ElevenLabsTranscriptEntry {
   role: string;
@@ -203,6 +204,28 @@ export async function POST(request: NextRequest) {
               .maybeSingle();
 
             updatedCall = newCall;
+          }
+        }
+
+        // AI-powered call analysis (lead scoring, sentiment, intent)
+        if (transcript && transcript.length > 0) {
+          try {
+            const analysis = await analyzeCall(transcript);
+            if (analysis) {
+              await supabase
+                .from("calls")
+                .update({
+                  lead_score: analysis.lead_score,
+                  intent: analysis.intent,
+                  sentiment: analysis.sentiment,
+                  follow_up_required: analysis.follow_up_required,
+                  ai_summary: analysis.ai_summary,
+                  suggested_action: analysis.suggested_action,
+                } as never)
+                .eq("elevenlabs_conversation_id", conversation_id);
+            }
+          } catch (analysisErr) {
+            console.error("Call analysis failed:", analysisErr);
           }
         }
 

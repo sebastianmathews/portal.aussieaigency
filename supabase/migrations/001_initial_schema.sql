@@ -63,6 +63,12 @@ create table calls (
   recording_url text,
   lead_data jsonb,
   appointment_booked boolean default false,
+  lead_score integer,
+  intent text,
+  sentiment text,
+  follow_up_required boolean default false,
+  ai_summary text,
+  suggested_action text,
   created_at timestamp with time zone default now()
 );
 
@@ -80,6 +86,37 @@ create table subscriptions (
   current_period_end timestamp with time zone,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
+);
+
+-- Campaigns (outbound calling)
+create table campaigns (
+  id uuid default gen_random_uuid() primary key,
+  organization_id uuid references organizations(id) on delete cascade not null,
+  agent_id uuid references agents(id) not null,
+  name text not null,
+  type text default 'custom' check (type in ('lead_followup', 'appointment_reminder', 'reengagement', 'survey', 'custom')),
+  status text default 'draft' check (status in ('draft', 'scheduled', 'running', 'paused', 'completed')),
+  contacts jsonb default '[]',
+  script_context text,
+  schedule_time timestamp with time zone,
+  max_concurrent integer default 1,
+  stats jsonb default '{"total": 0, "completed": 0, "answered": 0, "failed": 0}',
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+-- Campaign calls (individual call results)
+create table campaign_calls (
+  id uuid default gen_random_uuid() primary key,
+  campaign_id uuid references campaigns(id) on delete cascade not null,
+  contact_phone text not null,
+  contact_name text,
+  contact_context jsonb,
+  status text default 'pending' check (status in ('pending', 'calling', 'answered', 'voicemail', 'no_answer', 'busy', 'failed')),
+  duration integer default 0,
+  transcript jsonb,
+  outcome text,
+  created_at timestamp with time zone default now()
 );
 
 -- Row Level Security

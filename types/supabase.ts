@@ -281,6 +281,93 @@ export interface Database {
           }
         ]
       }
+      campaigns: {
+        Row: {
+          id: string
+          organization_id: string
+          agent_id: string
+          name: string
+          type: string
+          status: string
+          contacts: Json
+          script_context: string | null
+          schedule_time: string | null
+          max_concurrent: number
+          stats: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          agent_id: string
+          name: string
+          type?: string
+          status?: string
+          contacts?: Json
+          script_context?: string | null
+          schedule_time?: string | null
+          max_concurrent?: number
+          stats?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          agent_id?: string
+          name?: string
+          type?: string
+          status?: string
+          contacts?: Json
+          script_context?: string | null
+          schedule_time?: string | null
+          max_concurrent?: number
+          stats?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      campaign_calls: {
+        Row: {
+          id: string
+          campaign_id: string
+          contact_phone: string
+          contact_name: string | null
+          contact_context: Json | null
+          status: string
+          duration: number
+          transcript: Json | null
+          outcome: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          contact_phone: string
+          contact_name?: string | null
+          contact_context?: Json | null
+          status?: string
+          duration?: number
+          transcript?: Json | null
+          outcome?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          contact_phone?: string
+          contact_name?: string | null
+          contact_context?: Json | null
+          status?: string
+          duration?: number
+          transcript?: Json | null
+          outcome?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
