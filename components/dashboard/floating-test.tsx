@@ -149,7 +149,7 @@ export function FloatingTestWidget() {
 
       {/* Expanded panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[360px] bg-white rounded-2xl shadow-[0_10px_40px_rgba(10,22,40,0.2)] overflow-hidden flex flex-col" style={{ height: "480px" }}>
+        <div className="fixed bottom-6 right-6 z-50 w-[min(360px,calc(100vw-48px))] bg-white rounded-2xl shadow-[0_10px_40px_rgba(10,22,40,0.2)] overflow-hidden flex flex-col" style={{ height: "min(480px, calc(100vh - 48px))" }}>
           {/* Header */}
           <div className="bg-[#0A1628] px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -286,8 +286,8 @@ const styles: Record<string, React.CSSProperties> = {
     transition: "transform 0.2s, box-shadow 0.2s",
   },
   widget: {
-    width: "380px",
-    height: "560px",
+    width: "min(380px, calc(100vw - 48px))",
+    height: "min(560px, calc(100vh - 48px))",
     background: "#FFFFFF",
     borderRadius: "16px",
     boxShadow: "0 10px 40px rgba(10, 22, 40, 0.2)",

@@ -108,7 +108,7 @@ export function NotificationsDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[360px] p-0">
+      <DropdownMenuContent align="end" className="w-[min(360px,calc(100vw-32px))] p-0">
         <div className="px-4 py-3 border-b flex items-center justify-between">
           <h3 className="font-semibold text-sm text-[#0A1628]">Notifications</h3>
           {unreadCount > 0 && (

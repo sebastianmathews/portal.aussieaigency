@@ -159,7 +159,7 @@ export default function ChatWidgetPage() {
 const s: Record<string, React.CSSProperties> = {
   container: { position: "fixed", bottom: "24px", right: "24px", zIndex: 9999, fontFamily: "'DM Sans', sans-serif" },
   bubble: { width: "60px", height: "60px", borderRadius: "50%", background: "linear-gradient(135deg, #F5A623, #FFCA5F)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(245, 166, 35, 0.4)" },
-  widget: { width: "380px", height: "540px", background: "#FFFFFF", borderRadius: "16px", boxShadow: "0 10px 40px rgba(10, 22, 40, 0.2)", display: "flex", flexDirection: "column" as const, overflow: "hidden" },
+  widget: { width: "min(380px, calc(100vw - 48px))", height: "min(540px, calc(100vh - 48px))", background: "#FFFFFF", borderRadius: "16px", boxShadow: "0 10px 40px rgba(10, 22, 40, 0.2)", display: "flex", flexDirection: "column" as const, overflow: "hidden" },
   header: { background: "#0A1628", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" },
   headerLeft: { display: "flex", alignItems: "center", gap: "12px" },
   avatar: { width: "36px", height: "36px", borderRadius: "50%", background: "#F5A623", display: "flex", alignItems: "center", justifyContent: "center" },
