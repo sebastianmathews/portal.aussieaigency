@@ -163,15 +163,47 @@ export async function POST(request: NextRequest) {
           updateData.summary = summary;
         }
 
-        const { error, data: updatedCall } = await supabase
+        // Try to update existing call record
+        let updatedCall = null;
+        const { error, data } = await supabase
           .from("calls")
           .update(updateData)
           .eq("elevenlabs_conversation_id", conversation_id)
           .select("organization_id, caller_number, created_at")
           .maybeSingle();
 
+        updatedCall = data;
+
         if (error) {
           console.error("Failed to update call on conversation.completed:", error);
+        }
+
+        // If no call was found by conversation_id, create a new record
+        // This handles cases where conversation.started didn't match
+        if (!updatedCall && payload.agent_id) {
+          const { data: agentData } = await supabase
+            .from("agents")
+            .select("id, organization_id")
+            .eq("elevenlabs_agent_id", payload.agent_id)
+            .maybeSingle();
+
+          if (agentData) {
+            const insertData: Record<string, unknown> = {
+              ...updateData,
+              organization_id: agentData.organization_id,
+              agent_id: agentData.id,
+              twilio_call_sid: `el_${conversation_id}`,
+              caller_number: (metadata?.caller_number as string) || "Unknown",
+            };
+
+            const { data: newCall } = await supabase
+              .from("calls")
+              .insert(insertData as never)
+              .select("organization_id, caller_number, created_at")
+              .maybeSingle();
+
+            updatedCall = newCall;
+          }
         }
 
         // Auto-email transcript to organization owner

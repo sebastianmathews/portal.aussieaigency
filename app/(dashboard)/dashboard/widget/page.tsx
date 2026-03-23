@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Code2, Globe, MessageSquare, Mic2 } from "lucide-react";
+import { Globe, MessageSquare, Mic2 } from "lucide-react";
 import { CopyButton } from "@/components/widget/copy-button";
 
 export default async function WidgetPage() {
@@ -52,6 +52,20 @@ export default async function WidgetPage() {
 (function(){
   var d=document,s=d.createElement('script');
   s.src='${baseUrl}/widget-loader.js';
+  s.setAttribute('data-agent-id','${agentId}');
+  s.setAttribute('data-base-url','${baseUrl}');
+  s.async=true;
+  d.body.appendChild(s);
+})();
+</script>`
+    : null;
+
+  const chatCode = agentId
+    ? `<!-- Aussie AI Agency Chat Widget (Text) -->
+<script>
+(function(){
+  var d=document,s=d.createElement('script');
+  s.src='${baseUrl}/chat-widget-loader.js';
   s.setAttribute('data-agent-id','${agentId}');
   s.setAttribute('data-base-url','${baseUrl}');
   s.async=true;
@@ -135,11 +149,11 @@ export default async function WidgetPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Code2 className="h-5 w-5 text-[#F5A623]" />
-                    Embed Code
+                    <Mic2 className="h-5 w-5 text-[#F5A623]" />
+                    Voice Widget (Essential + Complete)
                   </CardTitle>
                   <CardDescription>
-                    Copy and paste this code before the closing{" "}
+                    Voice + text chat widget. Copy and paste before the closing{" "}
                     <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
                       &lt;/body&gt;
                     </code>{" "}
@@ -180,6 +194,37 @@ export default async function WidgetPage() {
                   </li>
                   <li>Save and publish — the chat widget will appear automatically</li>
                 </ol>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Chat Widget Embed Code (Complete plan) */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageSquare className="h-5 w-5 text-[#F5A623]" />
+                    Chat Widget (Complete plan)
+                  </CardTitle>
+                  <CardDescription>
+                    Text-only chatbot powered by OpenAI. Same AI personality, no
+                    voice — just text chat for website visitors.
+                  </CardDescription>
+                </div>
+                <Badge className="bg-[#F5A623]/15 text-[#F5A623] hover:bg-[#F5A623]/15 text-xs">
+                  Complete plan
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <pre className="bg-[#0A1628] text-green-400 p-4 rounded-lg text-sm overflow-x-auto font-mono leading-relaxed">
+                  {chatCode}
+                </pre>
+                <div className="absolute top-3 right-3">
+                  <CopyButton text={chatCode!} />
+                </div>
               </div>
             </CardContent>
           </Card>

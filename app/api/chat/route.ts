@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       .from("agents")
       .select("name, system_prompt, greeting, faqs, organization_id")
       .eq("elevenlabs_agent_id", agentId)
-      .single();
+      .maybeSingle();
 
     if (!agent) {
       return NextResponse.json(
