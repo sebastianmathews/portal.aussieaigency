@@ -77,7 +77,7 @@ export default async function CallDetailPage({
       {/* Call metadata */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-navy-500">Call Detail</h1>
+          <h1 className="text-2xl font-bold text-navy-500 font-heading">Call Detail</h1>
           <p className="text-muted-foreground mt-1">
             {call.caller_number
               ? formatPhone(call.caller_number)

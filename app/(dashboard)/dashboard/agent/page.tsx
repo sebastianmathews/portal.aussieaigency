@@ -60,7 +60,7 @@ export default async function AgentPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">
+          <h1 className="text-2xl font-bold text-[#0A1628] font-heading">
             {isNew ? "Create Your AI Agent" : "Agent Configuration"}
           </h1>
           <p className="text-muted-foreground mt-1">

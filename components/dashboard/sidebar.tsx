@@ -68,20 +68,21 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
   };
 
   return (
-    <div className="flex h-full flex-col bg-navy-500">
+    <div className="flex h-full flex-col bg-white border-r border-gray-200">
       {/* Brand */}
-      <div className="flex h-16 items-center gap-3 px-6 border-b border-white/10">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold-500">
-          <Bot className="h-5 w-5 text-navy-500" />
+      <div className="flex h-16 items-center gap-3 px-6 border-b border-gray-100">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F5A623] to-[#FFCA5F] shadow-sm">
+          <Bot className="h-5 w-5 text-[#0A1628]" />
         </div>
-        <div>
-          <span className="text-base font-bold text-white">Aussie AI</span>
-          <span className="text-base font-bold text-gold-500"> Agency</span>
+        <div className="font-heading">
+          <span className="text-[15px] font-bold text-[#0A1628]">Aussie</span>
+          <span className="text-[15px] font-bold text-[#F5A623]"> AI</span>
+          <span className="text-[15px] font-bold text-[#0A1628]"> Agency</span>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto">
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
@@ -90,16 +91,21 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all relative",
                 active
-                  ? "bg-gold-500/15 text-gold-500"
-                  : "text-navy-200 hover:bg-white/5 hover:text-white"
+                  ? "bg-[#F5A623]/10 text-[#0A1628]"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-[#0A1628]"
               )}
             >
               {active && (
-                <div className="absolute left-0 h-8 w-1 rounded-r-full bg-gold-500" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full bg-[#F5A623]" />
               )}
-              <item.icon className={cn("h-5 w-5 flex-shrink-0", active ? "text-gold-500" : "text-navy-200")} />
+              <item.icon
+                className={cn(
+                  "h-[18px] w-[18px] flex-shrink-0",
+                  active ? "text-[#F5A623]" : "text-gray-400"
+                )}
+              />
               {item.label}
             </Link>
           );
@@ -107,18 +113,18 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
       </nav>
 
       {/* User info */}
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t border-gray-100 p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9 border border-white/20">
-            <AvatarFallback className="bg-gold-500/20 text-gold-500 text-xs font-semibold">
+          <Avatar className="h-9 w-9 border border-gray-200">
+            <AvatarFallback className="bg-[#F5A623]/10 text-[#F5A623] text-xs font-semibold">
               {getInitials(user.full_name || user.email)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
+            <p className="text-sm font-medium text-[#0A1628] truncate">
               {user.full_name || "User"}
             </p>
-            <p className="text-xs text-navy-200 truncate">
+            <p className="text-xs text-gray-400 truncate">
               {organization?.name || "No organization"}
             </p>
           </div>
@@ -126,7 +132,7 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            className="h-8 w-8 text-navy-200 hover:text-white hover:bg-white/10"
+            className="h-8 w-8 text-gray-400 hover:text-[#0A1628] hover:bg-gray-50"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />
@@ -142,21 +148,23 @@ export function Sidebar({ user, organization }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile hamburger button */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center gap-3 bg-navy-500 px-4 lg:hidden">
+      {/* Mobile top bar */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center gap-3 bg-white/95 backdrop-blur-xl border-b border-gray-200 px-4 lg:hidden">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setMobileOpen(true)}
-          className="text-white hover:bg-white/10"
+          className="text-[#0A1628] hover:bg-gray-50"
         >
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gold-500">
-            <Bot className="h-4 w-4 text-navy-500" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#F5A623] to-[#FFCA5F]">
+            <Bot className="h-4 w-4 text-[#0A1628]" />
           </div>
-          <span className="text-sm font-bold text-white">Aussie AI Agency</span>
+          <span className="text-sm font-bold text-[#0A1628] font-heading">
+            Aussie <span className="text-[#F5A623]">AI</span> Agency
+          </span>
         </div>
       </div>
 
@@ -164,7 +172,7 @@ export function Sidebar({ user, organization }: SidebarProps) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
           <div className="absolute inset-y-0 left-0 w-[280px] shadow-2xl">
@@ -172,7 +180,7 @@ export function Sidebar({ user, organization }: SidebarProps) {
               variant="ghost"
               size="icon"
               onClick={() => setMobileOpen(false)}
-              className="absolute right-2 top-3 z-10 text-white hover:bg-white/10"
+              className="absolute right-2 top-3 z-10 text-gray-400 hover:text-[#0A1628]"
             >
               <X className="h-5 w-5" />
             </Button>

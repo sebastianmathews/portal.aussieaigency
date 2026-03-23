@@ -9,7 +9,7 @@ export default function CampaignsPage() {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-navy-500">Campaigns</h1>
+        <h1 className="text-2xl font-bold text-navy-500 font-heading">Campaigns</h1>
         <p className="text-muted-foreground mt-1">
           Outbound calling campaigns to reach your contacts
         </p>
@@ -26,7 +26,7 @@ export default function CampaignsPage() {
             Coming Soon
           </Badge>
 
-          <h2 className="text-2xl font-bold text-navy-500 mb-3">
+          <h2 className="text-2xl font-bold text-navy-500 font-heading mb-3">
             Outbound Campaigns
           </h2>
 
