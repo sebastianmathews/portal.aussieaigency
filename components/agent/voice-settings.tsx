@@ -16,6 +16,8 @@ export interface VoiceSettingsData {
   style: number;
   speed: number;
   useSpeakerBoost: boolean;
+  expressiveMode: boolean;
+  audioTags: string[];
 }
 
 export const DEFAULT_VOICE_SETTINGS: VoiceSettingsData = {
@@ -24,7 +26,30 @@ export const DEFAULT_VOICE_SETTINGS: VoiceSettingsData = {
   style: 0,
   speed: 1.0,
   useSpeakerBoost: true,
+  expressiveMode: true,
+  audioTags: [],
 };
+
+const AVAILABLE_AUDIO_TAGS = [
+  "Coughs",
+  "Serious",
+  "Concerned",
+  "Excited",
+  "Patient",
+  "Chuckles",
+  "Whispering",
+  "Laughing",
+  "Angry",
+  "Sighs",
+  "Sad",
+  "Disappointed",
+  "Enthusiastic",
+  "Singing",
+  "French accent",
+  "US accent",
+  "Australian accent",
+  "British accent",
+];
 
 interface VoiceSettingsProps {
   value: VoiceSettingsData;
@@ -92,8 +117,17 @@ function SliderWithLabel({
 }
 
 export function VoiceSettings({ value, onChange }: VoiceSettingsProps) {
-  const update = (key: keyof VoiceSettingsData, val: number | boolean) => {
+  const update = (key: keyof VoiceSettingsData, val: number | boolean | string[]) => {
     onChange({ ...value, [key]: val });
+  };
+
+  const toggleTag = (tag: string) => {
+    const current = value.audioTags ?? [];
+    if (current.includes(tag)) {
+      update("audioTags", current.filter((t) => t !== tag));
+    } else if (current.length < 20) {
+      update("audioTags", [...current, tag]);
+    }
   };
 
   return (
@@ -166,6 +200,93 @@ export function VoiceSettings({ value, onChange }: VoiceSettingsProps) {
         />
       </div>
 
+      {/* Expressive Mode */}
+      <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1.5">
+            <Label className="font-medium">Expressive Mode</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[250px]">
+                  <p className="text-xs">
+                    Enables more natural, expressive speech with emotional
+                    variation. The agent will sound more human-like.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            More natural, emotionally varied speech
+          </p>
+        </div>
+        <Switch
+          checked={value.expressiveMode ?? true}
+          onCheckedChange={(v) => update("expressiveMode", v)}
+        />
+      </div>
+
+      {/* Audio Tags */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Label className="text-sm font-medium">Audio Tags</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[250px]">
+                  <p className="text-xs">
+                    Audio tags control emotional expressions and vocal behaviors
+                    the agent can use during conversations. Select tags that fit
+                    your brand personality.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {(value.audioTags ?? []).length}/20
+          </span>
+        </div>
+
+        {/* Active tags */}
+        {(value.audioTags ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {(value.audioTags ?? []).map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#0A1628] text-white hover:bg-[#132039] transition-colors"
+              >
+                {tag} ×
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Available tags */}
+        <div className="flex flex-wrap gap-1.5">
+          {AVAILABLE_AUDIO_TAGS.filter(
+            (tag) => !(value.audioTags ?? []).includes(tag)
+          ).map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggleTag(tag)}
+              className="px-2.5 py-1 text-xs font-medium rounded-full border border-gray-200 text-gray-600 hover:border-[#F5A623]/50 hover:bg-[#F5A623]/5 transition-colors"
+            >
+              + {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Presets */}
       <div className="space-y-2">
         <Label className="text-sm text-muted-foreground">Quick Presets</Label>
@@ -174,41 +295,33 @@ export function VoiceSettings({ value, onChange }: VoiceSettingsProps) {
             {
               label: "Professional",
               settings: {
-                stability: 0.7,
-                similarityBoost: 0.75,
-                style: 0,
-                speed: 1.0,
-                useSpeakerBoost: true,
+                stability: 0.7, similarityBoost: 0.75, style: 0, speed: 1.0,
+                useSpeakerBoost: true, expressiveMode: true,
+                audioTags: ["Patient", "Serious"],
               },
             },
             {
               label: "Warm & Friendly",
               settings: {
-                stability: 0.45,
-                similarityBoost: 0.8,
-                style: 0.15,
-                speed: 0.95,
-                useSpeakerBoost: true,
+                stability: 0.45, similarityBoost: 0.8, style: 0.15, speed: 0.95,
+                useSpeakerBoost: true, expressiveMode: true,
+                audioTags: ["Enthusiastic", "Patient", "Chuckles"],
               },
             },
             {
               label: "Energetic",
               settings: {
-                stability: 0.35,
-                similarityBoost: 0.7,
-                style: 0.3,
-                speed: 1.1,
-                useSpeakerBoost: true,
+                stability: 0.35, similarityBoost: 0.7, style: 0.3, speed: 1.1,
+                useSpeakerBoost: true, expressiveMode: true,
+                audioTags: ["Excited", "Enthusiastic", "Laughing"],
               },
             },
             {
               label: "Calm & Soothing",
               settings: {
-                stability: 0.8,
-                similarityBoost: 0.85,
-                style: 0.05,
-                speed: 0.9,
-                useSpeakerBoost: true,
+                stability: 0.8, similarityBoost: 0.85, style: 0.05, speed: 0.9,
+                useSpeakerBoost: true, expressiveMode: true,
+                audioTags: ["Patient", "Concerned", "Whispering"],
               },
             },
           ].map((preset) => (
