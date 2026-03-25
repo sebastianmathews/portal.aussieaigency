@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
                 .join("");
 
               await sgMail.send({
-                from: process.env.SENDGRID_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
+                from: process.env.SENDGRID_FROM_EMAIL ?? "Aussie AI Agency <info@aussieaiagency.com.au>",
                 to: orgProfile.email,
                 subject: `New Call — ${callerNum} — ${callDate}`,
                 html: `
