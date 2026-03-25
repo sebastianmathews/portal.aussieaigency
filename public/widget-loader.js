@@ -1,7 +1,7 @@
 (function () {
   var script = document.currentScript;
   var agentId = script.getAttribute("data-agent-id");
-  var baseUrl = script.getAttribute("data-base-url") || "https://portal.aussieaigency.com.au";
+  var baseUrl = script.getAttribute("data-base-url") || "https://app.aussieaiagency.com.au";
 
   if (!agentId) {
     console.error("Aussie AI Agency Widget: Missing data-agent-id attribute");
