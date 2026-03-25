@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send transcript via Resend
-    const { Resend } = await import("resend");
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    // Send transcript via SendGrid
+    const sgMail = (await import("@sendgrid/mail")).default;
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
     const formattedDate = new Date(call.created_at).toLocaleString("en-AU", {
       dateStyle: "medium",
@@ -99,8 +99,8 @@ export async function POST(request: NextRequest) {
         : JSON.stringify(call.transcript, null, 2)
     );
 
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
+    await sgMail.send({
+      from: process.env.SENDGRID_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
       to: email,
       subject: `Call Transcript — ${safeCaller} — ${formattedDate}`,
       html: `

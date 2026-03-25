@@ -257,8 +257,8 @@ export async function POST(request: NextRequest) {
               .single();
 
             if (orgProfile?.email) {
-              const { Resend } = await import("resend");
-              const resend = new Resend(process.env.RESEND_API_KEY);
+              const sgMail = (await import("@sendgrid/mail")).default;
+              sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
               const callerNum = updatedCall.caller_number ?? "Unknown";
               const callDate = new Date(updatedCall.created_at ?? Date.now())
@@ -278,8 +278,8 @@ export async function POST(request: NextRequest) {
                 })
                 .join("");
 
-              await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
+              await sgMail.send({
+                from: process.env.SENDGRID_FROM_EMAIL ?? "Aussie AI Agency <noreply@aussieaigency.com.au>",
                 to: orgProfile.email,
                 subject: `New Call — ${callerNum} — ${callDate}`,
                 html: `

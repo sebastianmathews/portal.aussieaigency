@@ -44,7 +44,7 @@ export default async function WidgetPage() {
     .maybeSingle();
 
   const agentId = agent?.elevenlabs_agent_id;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://portal.aussieaigency.com.au";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.aussieaiagency.com.au";
 
   const iframeCode = agentId
     ? `<!-- Aussie AI Agency Chat Widget -->

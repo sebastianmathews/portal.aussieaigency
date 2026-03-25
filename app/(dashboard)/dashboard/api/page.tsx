@@ -19,7 +19,7 @@ export default async function APIDocsPage() {
     .single();
 
   const orgId = profile?.organization_id || "YOUR_API_KEY";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://portal.aussieaigency.com.au";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.aussieaiagency.com.au";
 
   const endpoints = [
     {
