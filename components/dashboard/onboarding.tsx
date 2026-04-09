@@ -38,15 +38,6 @@ export function Onboarding({
       time: "~3 minutes",
     },
     {
-      label: "Get a Phone Number",
-      description:
-        "Pick an Australian phone number that your AI receptionist will answer.",
-      href: "/dashboard/settings",
-      icon: Phone,
-      done: hasPhone,
-      time: "~3 minutes",
-    },
-    {
       label: "Teach It About Your Business",
       description:
         "Add common questions, upload a price list, or paste your website so it knows what to say.",
@@ -54,6 +45,15 @@ export function Onboarding({
       icon: BookOpen,
       done: hasKnowledge,
       time: "~3 minutes",
+    },
+    {
+      label: "Get a Phone Number",
+      description:
+        "Upgrade your plan and pick an Australian number for your AI to answer real calls.",
+      href: "/dashboard/billing",
+      icon: Phone,
+      done: hasPhone,
+      time: "~2 minutes",
     },
   ];
 
