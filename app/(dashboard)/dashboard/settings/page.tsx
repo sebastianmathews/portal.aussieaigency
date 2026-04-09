@@ -73,6 +73,7 @@ export default function SettingsPage() {
   const [notificationPhone, setNotificationPhone] = useState("");
   const [servicePaused, setServicePaused] = useState(false);
   const [togglingPause, setTogglingPause] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSettings() {
@@ -110,6 +111,15 @@ export default function SettingsPage() {
         setNotificationPhone(((org as Record<string, unknown>).notification_phone as string) ?? "");
         setServicePaused(!!(org as Record<string, unknown>).service_paused);
       }
+
+      // Get subscription status
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("organization_id", fetchedOrgId)
+        .in("status", ["active", "trialing"])
+        .single();
+      setSubscriptionStatus(sub?.status ?? null);
 
       setLoading(false);
     }
@@ -261,6 +271,7 @@ export default function SettingsPage() {
       <PhoneNumberPicker
         currentNumber={twilioNumber || null}
         onNumberProvisioned={(phone) => setTwilioNumber(phone)}
+        subscriptionStatus={subscriptionStatus}
       />
 
       {/* Forwarding number */}

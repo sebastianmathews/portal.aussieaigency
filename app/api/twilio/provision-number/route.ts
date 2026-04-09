@@ -52,6 +52,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check subscription — only paid accounts can provision numbers
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("status, plan")
+      .eq("organization_id", orgId)
+      .in("status", ["active", "trialing"])
+      .single();
+
+    if (!sub) {
+      return NextResponse.json(
+        { error: "No active subscription found. Please upgrade to activate a phone number." },
+        { status: 403 }
+      );
+    }
+
+    if (sub.status === "trialing") {
+      return NextResponse.json(
+        { error: "Phone numbers are available on paid plans only. Upgrade your plan to activate a number. During your trial, you can test your agent using the web widget." },
+        { status: 403 }
+      );
+    }
+
     // If a specific number was requested, use it directly
     // Otherwise search and pick the first available
     let numberToProvision: string;
@@ -137,9 +159,10 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Provision number error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Provision number error:", message);
     return NextResponse.json(
-      { error: "Failed to provision phone number" },
+      { error: message || "Failed to provision phone number" },
       { status: 500 }
     );
   }

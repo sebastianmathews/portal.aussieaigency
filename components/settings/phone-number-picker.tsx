@@ -45,11 +45,13 @@ interface AvailableNumber {
 interface PhoneNumberPickerProps {
   currentNumber: string | null;
   onNumberProvisioned: (phoneNumber: string) => void;
+  subscriptionStatus?: string | null;
 }
 
 export function PhoneNumberPicker({
   currentNumber,
   onNumberProvisioned,
+  subscriptionStatus,
 }: PhoneNumberPickerProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -178,6 +180,22 @@ export function PhoneNumberPicker({
                 formatPhone={formatPhone}
               />
             </Dialog>
+          </div>
+        ) : subscriptionStatus === "trialing" ? (
+          <div className="flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed border-amber-200 bg-amber-50/50 text-center">
+            <Phone className="h-10 w-10 text-amber-500 mb-3" />
+            <p className="font-medium text-[#0A1628] mb-1">Phone numbers available on paid plans</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              During your free trial, test your AI agent using the web widget on your dashboard.
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upgrade to get a dedicated Australian phone number for your AI receptionist.
+            </p>
+            <a href="/dashboard/billing">
+              <Button variant="gold" className="gap-2">
+                Upgrade to Get a Number
+              </Button>
+            </a>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed border-gray-200 text-center">
