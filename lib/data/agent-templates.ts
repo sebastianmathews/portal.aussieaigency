@@ -31,14 +31,16 @@ export interface TemplateVars {
   [key: string]: string;
 }
 
-const SHARED_QUESTIONS: TemplateQuestion[] = [
-  { id: "businessName", label: "Business Name", placeholder: "e.g. Smith's Dental Clinic", type: "text", required: true },
-  { id: "agentName", label: "AI Agent Name", placeholder: "e.g. Sarah, Amy, Jack", type: "text", required: true },
-  { id: "phone", label: "Business Phone Number", placeholder: "+61 2 9XXX XXXX", type: "text", required: false },
-  { id: "website", label: "Website URL", placeholder: "https://yourbusiness.com.au", type: "text", required: false },
-  { id: "address", label: "Business Address", placeholder: "123 Main St, Sydney NSW 2000", type: "text", required: false },
-  { id: "hours", label: "Business Hours", placeholder: "Mon-Fri 9am-5pm, Sat 9am-1pm", type: "text", required: true },
-];
+function buildSharedQuestions(example: { business: string; address?: string }): TemplateQuestion[] {
+  return [
+    { id: "businessName", label: "Business Name", placeholder: `e.g. ${example.business}`, type: "text", required: true },
+    { id: "agentName", label: "AI Agent Name", placeholder: "e.g. Sarah, Amy, Jack", type: "text", required: true },
+    { id: "phone", label: "Business Phone Number", placeholder: "+61 2 9XXX XXXX", type: "text", required: false },
+    { id: "website", label: "Website URL", placeholder: "https://yourbusiness.com.au", type: "text", required: false },
+    { id: "address", label: "Business Address", placeholder: example.address || "123 Main St, Sydney NSW 2000", type: "text", required: false },
+    { id: "hours", label: "Business Hours", placeholder: "Mon-Fri 9am-5pm, Sat 9am-1pm", type: "text", required: true },
+  ];
+}
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
   {
@@ -48,7 +50,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     description: "AI receptionist for medical clinics, GP practices, and health centres",
     industry: "healthcare",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Greenfield Medical Centre" }),
       { id: "services", label: "Services Offered", placeholder: "General consultations, skin checks, immunisations, health assessments...", type: "textarea", required: true },
       { id: "extra", label: "Important Policies", placeholder: "e.g. New patients need to arrive 15 min early, we bulk bill for concession holders...", type: "textarea", required: false },
     ],
@@ -96,7 +98,7 @@ Rules:
     description: "AI receptionist for plumbing businesses handling emergency and routine calls",
     industry: "trades",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Rapid Flow Plumbing" }),
       { id: "services", label: "Services Offered", placeholder: "Blocked drains, hot water systems, burst pipes, gas fitting, bathroom renovations...", type: "textarea", required: true },
       { id: "extra", label: "Service Area & Call-out Info", placeholder: "e.g. We service all of Sydney metro, $99 call-out fee, 24/7 emergency available...", type: "textarea", required: false },
     ],
@@ -143,7 +145,7 @@ Rules:
     description: "AI receptionist for electrical businesses and contractors",
     industry: "trades",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Bright Spark Electrical" }),
       { id: "services", label: "Services Offered", placeholder: "Switchboard upgrades, lighting, power points, safety inspections, ceiling fans, EV chargers...", type: "textarea", required: true },
       { id: "extra", label: "Service Area & Licensing", placeholder: "e.g. Licensed for domestic and commercial, service Brisbane and Gold Coast, free quotes on all jobs...", type: "textarea", required: false },
     ],
@@ -187,7 +189,7 @@ Safety Rules:
     description: "AI receptionist for mortgage brokers and finance professionals",
     industry: "finance",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Aussie Home Loans Pro" }),
       { id: "services", label: "Services Offered", placeholder: "Home loans, refinancing, investment loans, first home buyer packages, commercial lending...", type: "textarea", required: true },
       { id: "extra", label: "Lender Panel & Specialties", placeholder: "e.g. We work with 40+ lenders, specialise in first home buyers, free service for borrowers...", type: "textarea", required: false },
     ],
@@ -233,7 +235,7 @@ Rules:
     description: "AI receptionist for insurance brokers and agencies",
     industry: "finance",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Shield Insurance Brokers" }),
       { id: "services", label: "Insurance Types", placeholder: "Home & contents, car, business, life, income protection, health...", type: "textarea", required: true },
       { id: "extra", label: "Key Selling Points", placeholder: "e.g. Compare 20+ insurers, claims support included, local Australian service...", type: "textarea", required: false },
     ],
@@ -277,7 +279,7 @@ Rules:
     description: "AI receptionist for dental practices and oral health clinics",
     industry: "healthcare",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Smith's Dental Clinic" }),
       { id: "services", label: "Services Offered", placeholder: "Check-ups, cleans, fillings, crowns, implants, teeth whitening, orthodontics...", type: "textarea", required: true },
       { id: "extra", label: "Payment & Insurance Info", placeholder: "e.g. We accept all health funds, HICAPS on the spot, payment plans available, child dental benefits scheme...", type: "textarea", required: false },
     ],
@@ -322,7 +324,7 @@ Rules:
     description: "AI receptionist for real estate agencies handling buyer and seller enquiries",
     industry: "real_estate",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Harbour Realty Group" }),
       { id: "services", label: "Services", placeholder: "Residential sales, property management, commercial leasing, auctions...", type: "textarea", required: true },
       { id: "extra", label: "Areas Covered", placeholder: "e.g. Specialising in Sydney's Inner West, average days on market 28 days, 98% clearance rate...", type: "textarea", required: false },
     ],
@@ -367,7 +369,7 @@ Rules:
     description: "AI receptionist for law firms and legal practices",
     industry: "legal",
     questions: [
-      ...SHARED_QUESTIONS,
+      ...buildSharedQuestions({ business: "Parker & Associates Legal" }),
       { id: "services", label: "Practice Areas", placeholder: "Family law, conveyancing, wills & estates, commercial law, criminal law...", type: "textarea", required: true },
       { id: "extra", label: "Consultation Info", placeholder: "e.g. Free 30-min initial consultation, fixed-fee conveyancing from $990, legal aid accepted...", type: "textarea", required: false },
     ],
