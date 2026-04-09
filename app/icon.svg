@@ -1,8 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="#0A1628"/>
-  <!-- 2x2 dashboard grid icon in gold -->
-  <rect x="136" y="136" width="100" height="100" rx="16" fill="#F5A623"/>
-  <rect x="276" y="136" width="100" height="100" rx="16" fill="#F5A623"/>
-  <rect x="136" y="276" width="100" height="100" rx="16" fill="#F5A623"/>
-  <rect x="276" y="276" width="100" height="100" rx="16" fill="#F5A623"/>
+  <!-- Kangaroo silhouette in gold -->
+  <g transform="translate(100, 60) scale(0.65)" fill="#F5A623">
+    <!-- Body -->
+    <ellipse cx="280" cy="420" rx="95" ry="130" transform="rotate(-10, 280, 420)"/>
+    <!-- Head -->
+    <circle cx="340" cy="230" r="55"/>
+    <!-- Left ear -->
+    <ellipse cx="315" cy="165" rx="14" ry="42" transform="rotate(-15, 315, 165)"/>
+    <!-- Right ear -->
+    <ellipse cx="365" cy="165" rx="14" ry="42" transform="rotate(15, 365, 165)"/>
+    <!-- Inner ear -->
+    <ellipse cx="315" cy="168" rx="7" ry="28" transform="rotate(-15, 315, 168)" fill="#0A1628"/>
+    <ellipse cx="365" cy="168" rx="7" ry="28" transform="rotate(15, 365, 168)" fill="#0A1628"/>
+    <!-- Eye -->
+    <circle cx="355" cy="222" r="8" fill="#0A1628"/>
+    <!-- Nose -->
+    <ellipse cx="385" cy="238" rx="10" ry="7" fill="#0A1628"/>
+    <!-- Neck -->
+    <ellipse cx="310" cy="290" rx="40" ry="55"/>
+    <!-- Tail -->
+    <path d="M185 440 Q120 360 140 260 Q150 220 175 240 Q155 310 200 400 Z"/>
+    <!-- Back leg (thigh) -->
+    <ellipse cx="260" cy="520" rx="55" ry="45"/>
+    <!-- Back leg (shin) -->
+    <rect x="225" y="530" width="40" height="60" rx="18"/>
+    <!-- Back foot -->
+    <ellipse cx="265" cy="600" rx="55" ry="16"/>
+    <!-- Front arm -->
+    <ellipse cx="340" cy="380" rx="22" ry="55" transform="rotate(15, 340, 380)"/>
+    <!-- Front paw -->
+    <circle cx="350" cy="430" r="14"/>
+    <!-- Small AI circuit dot on body -->
+    <circle cx="280" cy="390" r="6" fill="#0A1628"/>
+    <circle cx="300" cy="410" r="4" fill="#0A1628"/>
+    <line x1="280" y1="390" x2="300" y2="410" stroke="#0A1628" stroke-width="2"/>
+  </g>
 </svg>

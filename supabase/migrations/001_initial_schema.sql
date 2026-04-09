@@ -128,20 +128,41 @@ alter table subscriptions enable row level security;
 alter table campaigns enable row level security;
 alter table campaign_calls enable row level security;
 
+-- Helper functions (SECURITY DEFINER to avoid RLS recursion on profiles)
+create or replace function public.get_user_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select role from profiles where id = auth.uid()
+$$;
+
+create or replace function public.get_user_org_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select organization_id from profiles where id = auth.uid()
+$$;
+
 -- Policies (users can only see their own org data)
 create policy "Users can view own organization"
   on organizations for select
-  using (id = (select organization_id from profiles where id = auth.uid()));
+  using (id = public.get_user_org_id());
 
 create policy "Users can update own organization"
   on organizations for update
-  using (id = (select organization_id from profiles where id = auth.uid()));
+  using (id = public.get_user_org_id());
 
 create policy "Users can view own profile and team members"
   on profiles for select
   using (
     id = auth.uid()
-    OR organization_id = (select organization_id from profiles where id = auth.uid())
+    OR organization_id = public.get_user_org_id()
   );
 
 create policy "Users can update own profile"
@@ -150,69 +171,69 @@ create policy "Users can update own profile"
 
 create policy "Users can view own agents"
   on agents for select
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 create policy "Users can insert own agents"
   on agents for insert
-  with check (organization_id = (select organization_id from profiles where id = auth.uid()));
+  with check (organization_id = public.get_user_org_id());
 
 create policy "Users can update own agents"
   on agents for update
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 create policy "Users can delete own agents"
   on agents for delete
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 create policy "Users can view own calls"
   on calls for select
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 create policy "Users can view own subscription"
   on subscriptions for select
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 -- Admin policies (admins see everything)
 create policy "Admins can manage all organizations"
   on organizations for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 create policy "Admins can manage all profiles"
   on profiles for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 create policy "Admins can manage all agents"
   on agents for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 create policy "Admins can manage all calls"
   on calls for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 create policy "Admins can manage all subscriptions"
   on subscriptions for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 -- Campaign policies
 create policy "Users can view own campaigns"
   on campaigns for select
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 create policy "Users can manage own campaigns"
   on campaigns for all
-  using (organization_id = (select organization_id from profiles where id = auth.uid()));
+  using (organization_id = public.get_user_org_id());
 
 create policy "Users can view own campaign calls"
   on campaign_calls for select
-  using (campaign_id in (select id from campaigns where organization_id = (select organization_id from profiles where id = auth.uid())));
+  using (campaign_id in (select id from campaigns where organization_id = public.get_user_org_id()));
 
 create policy "Admins can manage all campaigns"
   on campaigns for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 create policy "Admins can manage all campaign calls"
   on campaign_calls for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (public.get_user_role() = 'admin');
 
 -- Service role bypass for webhooks (service role bypasses RLS by default)
 
