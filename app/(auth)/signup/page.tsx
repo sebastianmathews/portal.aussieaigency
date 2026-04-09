@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Bot, Loader2, CheckCircle2, Shield, Clock, Headphones } from "lucide-react";
+import { Bot, Loader2, CheckCircle2, Shield, Clock, Headphones, MailCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +81,32 @@ function SignupForm() {
     }
   };
 
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const handleResend = useCallback(async () => {
+    if (cooldown > 0 || resending) return;
+    setResending(true);
+    setResent(false);
+    try {
+      const supabase = createClient();
+      await supabase.auth.resend({ type: "signup", email });
+      setResent(true);
+      setCooldown(60);
+    } catch {
+      // silently fail — user can try again
+    } finally {
+      setResending(false);
+    }
+  }, [cooldown, resending, email]);
+
   if (success) {
     return (
       <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center px-4">
@@ -102,6 +128,32 @@ function SignupForm() {
                 Back to Sign In
               </Button>
             </Link>
+
+            <button
+              onClick={handleResend}
+              disabled={resending || cooldown > 0}
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg border-2 border-[#F5A623]/40 bg-transparent px-4 py-2.5 text-sm font-semibold text-[#F5A623] transition-colors hover:bg-[#F5A623]/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : resent && cooldown > 0 ? (
+                <>
+                  <MailCheck className="h-4 w-4" />
+                  Email resent! ({cooldown}s)
+                </>
+              ) : cooldown > 0 ? (
+                <>Resend verification email ({cooldown}s)</>
+              ) : (
+                "Resend verification email"
+              )}
+            </button>
+
+            <p className="text-xs text-[#9BA4B5] mt-4">
+              Check your spam folder too — our emails sometimes end up there.
+            </p>
           </div>
         </div>
       </div>

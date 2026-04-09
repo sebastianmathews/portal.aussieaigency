@@ -38,6 +38,13 @@ import {
   FileText,
   File,
   Link2,
+  AlertTriangle,
+  Lightbulb,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  FileUp,
+  Globe2,
 } from "lucide-react";
 
 interface FaqItem {
@@ -72,6 +79,9 @@ export default function KnowledgeBasePage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+
+  // Quick Start Tips
+  const [tipsOpen, setTipsOpen] = useState(false);
 
   // URL dialog
   const [urlDialogOpen, setUrlDialogOpen] = useState(false);
@@ -309,6 +319,64 @@ export default function KnowledgeBasePage() {
           Train your AI agent with FAQs, documents, and website content
         </p>
       </div>
+
+      {/* KB Quality Warning */}
+      {agentId && faqs.length === 0 && knowledgeItems.length === 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 lg:p-5">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-amber-100 p-2 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-900">
+                Your AI receptionist has no training data yet
+              </p>
+              <p className="text-sm text-amber-800 mt-1">
+                Add at least 5 FAQs or upload a document so it can answer your
+                customers&apos; questions accurately.
+              </p>
+
+              {/* Collapsible Quick Start Tips */}
+              <button
+                type="button"
+                onClick={() => setTipsOpen(!tipsOpen)}
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 hover:text-amber-900 transition-colors"
+              >
+                <Lightbulb className="h-4 w-4" />
+                Quick Start Tips
+                {tipsOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+
+              {tipsOpen && (
+                <ul className="mt-3 space-y-2.5">
+                  <li className="flex items-start gap-2.5 text-sm text-amber-900">
+                    <div className="rounded-md bg-amber-200/60 p-1.5 shrink-0 mt-0.5">
+                      <MessageSquare className="h-3.5 w-3.5 text-amber-700" />
+                    </div>
+                    Add your top 5 most-asked questions
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm text-amber-900">
+                    <div className="rounded-md bg-amber-200/60 p-1.5 shrink-0 mt-0.5">
+                      <FileUp className="h-3.5 w-3.5 text-amber-700" />
+                    </div>
+                    Upload your services/pricing PDF
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm text-amber-900">
+                    <div className="rounded-md bg-amber-200/60 p-1.5 shrink-0 mt-0.5">
+                      <Globe2 className="h-3.5 w-3.5 text-amber-700" />
+                    </div>
+                    Paste your website URL to auto-import content
+                  </li>
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="faqs" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 h-auto p-1">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AGENT_TEMPLATES, getTemplate, type TemplateVars } from "@/lib/data/agent-templates";
 import { VoiceSelector } from "@/components/agent/voice-selector";
@@ -19,13 +18,16 @@ import {
   Sparkles,
   Mic2,
   FileText,
+  Phone,
+  PhoneCall,
+  BookOpen,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Step = "template" | "questions" | "voice" | "creating";
+type Step = "template" | "questions" | "voice" | "creating" | "success";
 
 export default function NewAgentPage() {
-  const router = useRouter();
   const { toast } = useToast();
 
   const [step, setStep] = useState<Step>("template");
@@ -112,13 +114,8 @@ export default function NewAgentPage() {
         throw new Error(data.error || "Failed to create agent");
       }
 
-      toast({
-        title: "Agent created!",
-        description: `${agentName} is ready to receive calls. You can now customise the details further.`,
-      });
-
-      router.push("/dashboard/agent");
-      router.refresh();
+      setStep("success");
+      setCreating(false);
     } catch (err) {
       toast({
         title: "Failed to create agent",
@@ -410,6 +407,121 @@ export default function NewAgentPage() {
             We&apos;re creating your AI agent{template ? ` with the ${template.name} template` : ""},
             configuring the voice, and setting things up. This takes just a moment.
           </p>
+        </div>
+      )}
+
+      {/* Success celebration */}
+      {step === "success" && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          {/* Confetti CSS animation */}
+          <style jsx>{`
+            @keyframes confetti-fall {
+              0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(120px) rotate(720deg); opacity: 0; }
+            }
+            @keyframes confetti-fall-slow {
+              0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(140px) rotate(-540deg); opacity: 0; }
+            }
+            .confetti-container {
+              position: relative;
+              width: 200px;
+              height: 120px;
+              margin: 0 auto;
+              overflow: visible;
+              pointer-events: none;
+            }
+            .confetti-piece {
+              position: absolute;
+              width: 8px;
+              height: 8px;
+              border-radius: 2px;
+              top: 0;
+              animation: confetti-fall 1.8s ease-out forwards;
+            }
+            .confetti-piece:nth-child(odd) {
+              animation-name: confetti-fall-slow;
+              border-radius: 50%;
+              width: 6px;
+              height: 6px;
+            }
+            .confetti-piece:nth-child(1) { left: 10%; background: #F5A623; animation-delay: 0s; animation-duration: 1.6s; }
+            .confetti-piece:nth-child(2) { left: 25%; background: #0A1628; animation-delay: 0.1s; animation-duration: 1.8s; }
+            .confetti-piece:nth-child(3) { left: 40%; background: #F5A623; animation-delay: 0.05s; animation-duration: 1.5s; }
+            .confetti-piece:nth-child(4) { left: 55%; background: #22c55e; animation-delay: 0.15s; animation-duration: 1.7s; }
+            .confetti-piece:nth-child(5) { left: 70%; background: #F5A623; animation-delay: 0.08s; animation-duration: 1.9s; }
+            .confetti-piece:nth-child(6) { left: 85%; background: #0A1628; animation-delay: 0.12s; animation-duration: 1.6s; }
+            .confetti-piece:nth-child(7) { left: 5%; background: #22c55e; animation-delay: 0.2s; animation-duration: 2s; }
+            .confetti-piece:nth-child(8) { left: 35%; background: #F5A623; animation-delay: 0.18s; animation-duration: 1.4s; }
+            .confetti-piece:nth-child(9) { left: 60%; background: #0A1628; animation-delay: 0.25s; animation-duration: 1.8s; }
+            .confetti-piece:nth-child(10) { left: 90%; background: #22c55e; animation-delay: 0.1s; animation-duration: 1.5s; }
+            .confetti-piece:nth-child(11) { left: 15%; background: #F5A623; animation-delay: 0.3s; animation-duration: 1.7s; }
+            .confetti-piece:nth-child(12) { left: 75%; background: #F5A623; animation-delay: 0.22s; animation-duration: 1.9s; }
+          `}</style>
+
+          <div className="confetti-container mb-2">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="confetti-piece" />
+            ))}
+          </div>
+
+          <h2 className="text-3xl font-bold text-[#0A1628] font-heading mb-2">
+            {"\uD83C\uDF89"} {agentName} is ready to go!
+          </h2>
+          <p className="text-[#6B7280] mb-8 max-w-md">
+            Your agent is live and ready to answer calls once you connect a phone number.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-3 w-full max-w-2xl mb-8">
+            <Link href="/dashboard/agent" className="block">
+              <Card className="h-full border-2 border-transparent hover:border-[#F5A623]/40 hover:shadow-md transition-all cursor-pointer group">
+                <CardContent className="p-5 flex flex-col items-center text-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-[#F5A623]/10 flex items-center justify-center group-hover:bg-[#F5A623]/20 transition-colors">
+                    <PhoneCall className="h-6 w-6 text-[#F5A623]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#0A1628] text-sm">Make a Test Call</p>
+                    <p className="text-xs text-[#6B7280] mt-1">Try out your new agent</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/settings" className="block">
+              <Card className="h-full border-2 border-transparent hover:border-[#F5A623]/40 hover:shadow-md transition-all cursor-pointer group">
+                <CardContent className="p-5 flex flex-col items-center text-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-[#F5A623]/10 flex items-center justify-center group-hover:bg-[#F5A623]/20 transition-colors">
+                    <Phone className="h-6 w-6 text-[#F5A623]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#0A1628] text-sm">Get a Phone Number</p>
+                    <p className="text-xs text-[#6B7280] mt-1">Connect a number to go live</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/knowledge-base" className="block">
+              <Card className="h-full border-2 border-transparent hover:border-[#F5A623]/40 hover:shadow-md transition-all cursor-pointer group">
+                <CardContent className="p-5 flex flex-col items-center text-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-[#F5A623]/10 flex items-center justify-center group-hover:bg-[#F5A623]/20 transition-colors">
+                    <BookOpen className="h-6 w-6 text-[#F5A623]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#0A1628] text-sm">Train Knowledge Base</p>
+                    <p className="text-xs text-[#6B7280] mt-1">Add docs and FAQs</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
+          <Link href="/dashboard/agent">
+            <Button variant="outline" className="gap-1.5">
+              <LayoutDashboard className="h-4 w-4" />
+              Go to Dashboard
+            </Button>
+          </Link>
         </div>
       )}
     </div>

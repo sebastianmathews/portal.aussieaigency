@@ -61,6 +61,9 @@ export async function GET(request: Request) {
               (user.user_metadata?.full_name as string) ||
               "My Business";
 
+            const fullName =
+              (user.user_metadata?.full_name as string) || "";
+
             // Create organization
             const { data: org } = await admin
               .from("organizations")
@@ -75,9 +78,7 @@ export async function GET(request: Request) {
                   .from("profiles")
                   .update({
                     organization_id: org.id,
-                    full_name:
-                      (user.user_metadata?.full_name as string) ||
-                      existingProfile.id,
+                    full_name: fullName || existingProfile.id,
                   })
                   .eq("id", user.id);
               } else {
@@ -85,10 +86,30 @@ export async function GET(request: Request) {
                 await admin.from("profiles").insert({
                   id: user.id,
                   email: user.email ?? "",
-                  full_name:
-                    (user.user_metadata?.full_name as string) || "",
+                  full_name: fullName,
                   organization_id: org.id,
                 });
+              }
+
+              // Send branded welcome email (fire-and-forget for new signups only)
+              try {
+                const welcomeUrl = `${origin}/api/auth/welcome-email`;
+                fetch(welcomeUrl, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+                  },
+                  body: JSON.stringify({
+                    email: user.email,
+                    fullName: fullName || "there",
+                    businessName,
+                  }),
+                }).catch((emailErr) =>
+                  console.error("Welcome email fire-and-forget failed:", emailErr)
+                );
+              } catch (emailErr) {
+                console.error("Welcome email error:", emailErr);
               }
             }
           }

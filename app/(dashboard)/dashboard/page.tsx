@@ -22,6 +22,7 @@ import { formatDuration, formatDate, formatPhone } from "@/lib/utils";
 import { DashboardChart } from "@/components/dashboard/chart";
 import { Onboarding } from "@/components/dashboard/onboarding";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { SetupCallBanner } from "@/components/dashboard/setup-call-banner";
 
 const statusVariant: Record<string, "default" | "success" | "destructive" | "warning" | "secondary"> = {
   completed: "success",
@@ -201,6 +202,9 @@ export default async function DashboardPage() {
         hasPhone={hasPhone}
         hasKnowledge={hasKnowledge}
       />
+
+      {/* Setup call banner (shows only when onboarding incomplete) */}
+      {!(hasAgent && hasPhone && hasKnowledge) && <SetupCallBanner />}
 
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
