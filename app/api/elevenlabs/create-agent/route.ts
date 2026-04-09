@@ -123,9 +123,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Create agent error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Create agent error:", message);
     return NextResponse.json(
-      { error: "Failed to create agent" },
+      { error: message || "Failed to create agent" },
       { status: 500 }
     );
   }

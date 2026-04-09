@@ -40,13 +40,12 @@ export default function NewAgentPage() {
   const handleSelectTemplate = (id: string | null) => {
     setSelectedTemplate(id);
     setAnswers({});
+    setAgentName("");
     if (id) {
-      // Pre-fill agentName from template suggestion
-      setAgentName("");
       setStep("questions");
     } else {
-      // Blank agent — go straight to the existing form
-      router.push("/dashboard/agent");
+      // Blank agent — skip questions, go straight to voice + name
+      setStep("voice");
     }
   };
 
@@ -62,26 +61,34 @@ export default function NewAgentPage() {
   };
 
   const handleCreate = async () => {
-    if (!template || !voiceId || !agentName.trim()) return;
+    if (!voiceId || !agentName.trim()) return;
 
     setCreating(true);
     setStep("creating");
 
     try {
-      const vars: TemplateVars = {
-        businessName: answers.businessName || "",
-        agentName: agentName.trim(),
-        phone: answers.phone || "",
-        website: answers.website || "",
-        address: answers.address || "",
-        hours: answers.hours || "",
-        services: answers.services || "",
-        extra: answers.extra || "",
-      };
+      let greeting: string;
+      let systemPrompt: string;
+      let faqs: { question: string; answer: string }[] = [];
 
-      const greeting = template.greeting(vars.businessName, vars.agentName);
-      const systemPrompt = template.systemPrompt(vars);
-      const faqs = template.faqs(vars);
+      if (template) {
+        const vars: TemplateVars = {
+          businessName: answers.businessName || "",
+          agentName: agentName.trim(),
+          phone: answers.phone || "",
+          website: answers.website || "",
+          address: answers.address || "",
+          hours: answers.hours || "",
+          services: answers.services || "",
+          extra: answers.extra || "",
+        };
+        greeting = template.greeting(vars.businessName, vars.agentName);
+        systemPrompt = template.systemPrompt(vars);
+        faqs = template.faqs(vars);
+      } else {
+        greeting = `Hi, thanks for calling! I'm ${agentName.trim()}, your AI assistant. How can I help you today?`;
+        systemPrompt = `You are ${agentName.trim()}, a professional and friendly AI receptionist. Answer questions helpfully, take messages, and offer to transfer to a human if needed.`;
+      }
 
       const res = await fetch("/api/elevenlabs/create-agent", {
         method: "POST",
@@ -367,7 +374,7 @@ export default function NewAgentPage() {
           </Card>
 
           <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={() => setStep("questions")} className="gap-1.5">
+            <Button variant="outline" onClick={() => setStep(template ? "questions" : "template")} className="gap-1.5">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
@@ -400,8 +407,8 @@ export default function NewAgentPage() {
             Setting up {agentName}...
           </h2>
           <p className="text-[#6B7280] max-w-md">
-            We&apos;re creating your AI agent with the {template?.name} template,
-            configuring the voice, and setting up your FAQs. This takes just a moment.
+            We&apos;re creating your AI agent{template ? ` with the ${template.name} template` : ""},
+            configuring the voice, and setting things up. This takes just a moment.
           </p>
         </div>
       )}
