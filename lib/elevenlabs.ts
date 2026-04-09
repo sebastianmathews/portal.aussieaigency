@@ -184,7 +184,7 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
           }),
         },
         turn: {
-          mode: config.interruptible === false ? "turn_based" : "interruptible",
+          mode: config.interruptible === false ? "turn" : "silence",
         },
         tts: buildTtsConfig(config.voiceId, config.voiceSettings),
         ...(config.callRecording && {
@@ -250,7 +250,7 @@ export async function updateAgent(
   }
   if (config.interruptible !== undefined) {
     conversationConfig.turn = {
-      mode: config.interruptible === false ? "turn_based" : "interruptible",
+      mode: config.interruptible === false ? "turn" : "silence",
     };
   }
   if (config.voiceId || config.voiceSettings) {
