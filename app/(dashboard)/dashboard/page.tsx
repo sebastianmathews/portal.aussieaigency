@@ -21,6 +21,7 @@ import { Phone, Clock, Bot, CalendarCheck } from "lucide-react";
 import { formatDuration, formatDate, formatPhone } from "@/lib/utils";
 import { DashboardChart } from "@/components/dashboard/chart";
 import { Onboarding } from "@/components/dashboard/onboarding";
+import { TrialBanner } from "@/components/dashboard/trial-banner";
 
 const statusVariant: Record<string, "default" | "success" | "destructive" | "warning" | "secondary"> = {
   completed: "success",
@@ -107,12 +108,12 @@ export default async function DashboardPage() {
     chartData.push({ day: dayStr, calls: count });
   }
 
-  // Get subscription for minutes included
+  // Get subscription for minutes included (active OR trialing)
   const { data: subscription } = await supabase
     .from("subscriptions")
-    .select("plan, minutes_included, status")
+    .select("plan, minutes_included, status, current_period_end")
     .eq("organization_id", orgId)
-    .eq("status", "active")
+    .in("status", ["active", "trialing"])
     .single();
 
   const minutesIncluded = subscription?.minutes_included ?? 0;
@@ -185,6 +186,14 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* Trial banner (shows only for trialing users) */}
+      {subscription?.status === "trialing" && subscription.current_period_end && (
+        <TrialBanner
+          trialEndsAt={subscription.current_period_end}
+          plan={subscription.plan ?? "essential"}
+        />
+      )}
+
       {/* Onboarding wizard (hides when all steps done) */}
       <Onboarding
         userName={profile?.full_name ?? ""}
@@ -241,8 +250,12 @@ export default async function DashboardPage() {
               this billing cycle
             </p>
             {subscription && (
-              <Badge variant="success">
-                {subscription.status === "active" ? "Active Plan" : subscription.status}
+              <Badge variant={subscription.status === "trialing" ? "warning" : "success"}>
+                {subscription.status === "active"
+                  ? "Active Plan"
+                  : subscription.status === "trialing"
+                    ? "Free Trial"
+                    : subscription.status}
               </Badge>
             )}
           </CardContent>

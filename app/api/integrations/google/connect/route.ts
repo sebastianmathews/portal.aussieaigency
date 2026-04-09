@@ -31,7 +31,17 @@ export async function GET() {
     const authUrl = getGoogleAuthUrl(state);
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error("Google connect error:", error);
-    return NextResponse.json({ error: "Failed to initiate Google connection" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Google connect error:", message);
+
+    // Check for missing env vars
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error("Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET env vars");
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    return NextResponse.redirect(
+      `${baseUrl}/dashboard/settings?google=error&reason=config_error`
+    );
   }
 }

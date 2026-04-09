@@ -33,6 +33,7 @@ export default async function DashboardLayout({
     .single();
 
   let organization = null;
+  let subscription = null;
   const orgId = orgMembership?.organization_id;
   if (orgId) {
     const { data: org } = await supabase
@@ -41,6 +42,14 @@ export default async function DashboardLayout({
       .eq("id", orgId)
       .single();
     organization = org;
+
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan, status")
+      .eq("organization_id", orgId)
+      .in("status", ["active", "trialing"])
+      .single();
+    subscription = sub;
   }
 
   const userProfile = {
@@ -53,7 +62,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar user={userProfile} organization={organization} />
+      <Sidebar user={userProfile} organization={organization} subscription={subscription} />
 
       {/* Main content */}
       <main className="lg:pl-[280px]">

@@ -146,7 +146,7 @@ function BillingContent() {
         .from("subscriptions")
         .select("plan, status, minutes_included")
         .eq("organization_id", orgId)
-        .eq("status", "active")
+        .in("status", ["active", "trialing"])
         .single();
 
       if (sub) {

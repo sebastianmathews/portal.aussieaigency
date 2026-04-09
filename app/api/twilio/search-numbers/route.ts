@@ -23,9 +23,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ numbers }, { status: 200 });
   } catch (error) {
-    console.error("Search numbers error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Search numbers error:", message);
     return NextResponse.json(
-      { error: "Failed to search for available numbers" },
+      { error: message || "Failed to search for available numbers" },
       { status: 500 }
     );
   }

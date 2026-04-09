@@ -38,29 +38,44 @@ interface Organization {
   name: string;
 }
 
+interface Subscription {
+  plan: string;
+  status: string;
+}
+
 interface SidebarProps {
   user: UserProfile;
   organization: Organization | null;
+  subscription?: Subscription | null;
 }
 
+// minPlan: null = all plans, "complete" = complete+enterprise, "enterprise" = enterprise only
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/agent", label: "Agents", icon: Bot },
-  { href: "/dashboard/calls", label: "Calls History", icon: Phone },
-  { href: "/dashboard/knowledge-base", label: "Knowledge Base", icon: BookOpen },
-  { href: "/dashboard/contacts", label: "Contacts", icon: Users },
-  { href: "/dashboard/widget", label: "Website Widget", icon: Code2 },
-  { href: "/dashboard/team", label: "Team", icon: UserPlus },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/dashboard/api", label: "API", icon: Code2 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, minPlan: null },
+  { href: "/dashboard/agent", label: "Agents", icon: Bot, minPlan: null },
+  { href: "/dashboard/calls", label: "Calls History", icon: Phone, minPlan: null },
+  { href: "/dashboard/knowledge-base", label: "Knowledge Base", icon: BookOpen, minPlan: null },
+  { href: "/dashboard/contacts", label: "Contacts", icon: Users, minPlan: null },
+  { href: "/dashboard/widget", label: "Website Widget", icon: Code2, minPlan: "complete" as const },
+  { href: "/dashboard/team", label: "Team", icon: UserPlus, minPlan: null },
+  { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone, minPlan: "enterprise" as const },
+  { href: "/dashboard/api", label: "API", icon: Code2, minPlan: "enterprise" as const },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings, minPlan: null },
+  { href: "/dashboard/billing", label: "Billing", icon: CreditCard, minPlan: null },
 ];
 
-function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onNavigate?: () => void }) {
+const PLAN_RANK: Record<string, number> = {
+  essential: 1,
+  complete: 2,
+  enterprise: 3,
+};
+
+function SidebarContent({ user, organization, subscription, onNavigate }: SidebarProps & { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const userPlanRank = PLAN_RANK[subscription?.plan ?? "essential"] ?? 1;
+  const isAdmin = user.role === "admin";
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -90,6 +105,25 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
       <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto">
         {navItems.map((item) => {
           const active = isActive(item.href);
+          const requiredRank = item.minPlan ? (PLAN_RANK[item.minPlan] ?? 1) : 0;
+          const locked = !isAdmin && requiredRank > userPlanRank;
+
+          if (locked) {
+            return (
+              <div
+                key={item.href}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 cursor-not-allowed"
+                title={`Requires ${item.minPlan} plan`}
+              >
+                <item.icon className="h-[18px] w-[18px] flex-shrink-0 text-gray-200" />
+                {item.label}
+                <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">
+                  {item.minPlan}
+                </span>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.href}
@@ -175,7 +209,7 @@ function SidebarContent({ user, organization, onNavigate }: SidebarProps & { onN
   );
 }
 
-export function Sidebar({ user, organization }: SidebarProps) {
+export function Sidebar({ user, organization, subscription }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -219,6 +253,7 @@ export function Sidebar({ user, organization }: SidebarProps) {
             <SidebarContent
               user={user}
               organization={organization}
+              subscription={subscription}
               onNavigate={() => setMobileOpen(false)}
             />
           </div>
@@ -227,7 +262,7 @@ export function Sidebar({ user, organization }: SidebarProps) {
 
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[280px] lg:block">
-        <SidebarContent user={user} organization={organization} />
+        <SidebarContent user={user} organization={organization} subscription={subscription} />
       </aside>
     </>
   );
