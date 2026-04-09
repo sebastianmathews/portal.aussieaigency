@@ -23,6 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TrustBadges } from "@/components/dashboard/trust-badges";
 
 interface Plan {
   id: string;
@@ -314,7 +315,7 @@ function BillingContent() {
           Choose Your Plan
         </h2>
         <div className="grid gap-6 md:grid-cols-3">
-          {PLANS.map((plan) => {
+          {PLANS.map((plan: Plan) => {
             const isCurrent = currentPlan === plan.id;
             return (
               <Card
@@ -393,6 +394,9 @@ function BillingContent() {
             );
           })}
         </div>
+
+        {/* Trust badges */}
+        <TrustBadges className="mt-8" />
       </div>
     </div>
   );

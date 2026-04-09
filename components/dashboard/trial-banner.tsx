@@ -51,6 +51,9 @@ export function TrialBanner({ trialEndsAt, plan }: TrialBannerProps) {
             You&apos;re on the {plan.charAt(0).toUpperCase() + plan.slice(1)}{" "}
             plan trial. Upgrade to keep your AI receptionist running.
           </p>
+          <p className="text-xs text-[#9CA3AF] mt-0.5">
+            Plus 30-day money-back guarantee after you upgrade
+          </p>
         </div>
       </div>
       <Link href="/dashboard/billing">

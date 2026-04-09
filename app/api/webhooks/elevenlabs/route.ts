@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { analyzeCall } from "@/lib/call-analysis";
+import { sendCallSMS } from "@/lib/notifications";
 
 interface ElevenLabsTranscriptEntry {
   role: string;
@@ -304,6 +305,41 @@ export async function POST(request: NextRequest) {
             }
           } catch (emailErr) {
             console.error("Failed to send auto transcript email:", emailErr);
+            // Non-blocking — don't fail the webhook
+          }
+        }
+
+        // SMS notification to business owner
+        if (updatedCall?.organization_id) {
+          try {
+            const { data: orgRaw } = await supabase
+              .from("organizations")
+              .select("*")
+              .eq("id", updatedCall.organization_id)
+              .single();
+            const org = orgRaw as Record<string, unknown> | null;
+
+            if (org?.sms_notifications_enabled && org?.notification_phone) {
+              // Get agent name
+              const { data: agentRow } = await supabase
+                .from("agents")
+                .select("name")
+                .eq("organization_id", updatedCall.organization_id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              await sendCallSMS({
+                ownerPhone: org.notification_phone as string,
+                callerNumber: updatedCall.caller_number ?? "Unknown",
+                duration: 0, // duration not available in webhook payload
+                summary: summary ?? null,
+                status: "completed",
+                agentName: agentRow?.name ?? "Your AI Agent",
+              });
+            }
+          } catch (smsErr) {
+            console.error("SMS notification failed:", smsErr);
             // Non-blocking — don't fail the webhook
           }
         }

@@ -6,6 +6,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Code2, Key, Terminal } from "lucide-react";
 import { CopyButton } from "@/components/widget/copy-button";
+import { WebhookManager } from "@/components/dashboard/webhook-manager";
 
 export default async function APIDocsPage() {
   const supabase = await createClient();
@@ -144,6 +145,9 @@ export default async function APIDocsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Webhooks */}
+      <WebhookManager />
 
       <Card>
         <CardContent className="p-5">

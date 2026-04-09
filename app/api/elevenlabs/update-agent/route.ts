@@ -32,6 +32,9 @@ export async function PUT(request: NextRequest) {
       voiceSettings,
       interruptible,
       timezone,
+      afterHoursGreeting,
+      afterHoursBehaviour,
+      afterHoursTransferNumber,
     } = body;
 
     if (!agentId) {
@@ -85,6 +88,9 @@ export async function PUT(request: NextRequest) {
       voiceSettings,
       interruptible,
       timezone,
+      afterHoursGreeting,
+      afterHoursBehaviour,
+      afterHoursTransferNumber,
     });
 
     // Update local agents table
@@ -109,6 +115,12 @@ export async function PUT(request: NextRequest) {
       localUpdate.interruptible = interruptible;
     if (timezone !== undefined)
       localUpdate.timezone = timezone;
+    if (afterHoursGreeting !== undefined)
+      localUpdate.after_hours_greeting = afterHoursGreeting || null;
+    if (afterHoursBehaviour !== undefined)
+      localUpdate.after_hours_behaviour = afterHoursBehaviour;
+    if (afterHoursTransferNumber !== undefined)
+      localUpdate.after_hours_transfer_number = afterHoursTransferNumber || null;
 
     localUpdate.updated_at = new Date().toISOString();
 

@@ -44,6 +44,7 @@ import {
   Save,
   Loader2,
   Bot,
+  Moon,
 } from "lucide-react";
 
 export interface AgentData {
@@ -64,6 +65,9 @@ export interface AgentData {
   voiceSettings: VoiceSettingsData;
   interruptible: boolean;
   timezone: string;
+  afterHoursGreeting: string;
+  afterHoursBehaviour: string;
+  afterHoursTransferNumber: string;
 }
 
 interface AgentFormProps {
@@ -72,17 +76,19 @@ interface AgentFormProps {
 
 const LANGUAGES = [
   { value: "en", label: "English" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "de", label: "German" },
-  { value: "it", label: "Italian" },
-  { value: "pt", label: "Portuguese" },
-  { value: "nl", label: "Dutch" },
-  { value: "ja", label: "Japanese" },
-  { value: "ko", label: "Korean" },
-  { value: "zh", label: "Chinese" },
+  { value: "zh", label: "Mandarin" },
+  { value: "vi", label: "Vietnamese" },
   { value: "ar", label: "Arabic" },
   { value: "hi", label: "Hindi" },
+  { value: "ko", label: "Korean" },
+  { value: "ja", label: "Japanese" },
+  { value: "es", label: "Spanish" },
+  { value: "it", label: "Italian" },
+  { value: "el", label: "Greek" },
+  { value: "fr", label: "French" },
+  { value: "de", label: "German" },
+  { value: "pt", label: "Portuguese" },
+  { value: "nl", label: "Dutch" },
   { value: "pl", label: "Polish" },
   { value: "ru", label: "Russian" },
   { value: "sv", label: "Swedish" },
@@ -102,6 +108,9 @@ export function AgentForm({ agent }: AgentFormProps) {
   const [systemPrompt, setSystemPrompt] = useState(agent?.systemPrompt ?? "");
   const [escalationNumber, setEscalationNumber] = useState(
     agent?.escalationNumber ?? ""
+  );
+  const [callTransferEnabled, setCallTransferEnabled] = useState(
+    !!(agent?.escalationNumber)
   );
   const [businessHours, setBusinessHours] = useState<BusinessHoursData>(
     agent?.businessHours ?? DEFAULT_BUSINESS_HOURS
@@ -123,6 +132,15 @@ export function AgentForm({ agent }: AgentFormProps) {
   );
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettingsData>(
     agent?.voiceSettings ?? DEFAULT_VOICE_SETTINGS
+  );
+  const [afterHoursGreeting, setAfterHoursGreeting] = useState(
+    agent?.afterHoursGreeting ?? ""
+  );
+  const [afterHoursBehaviour, setAfterHoursBehaviour] = useState(
+    agent?.afterHoursBehaviour ?? "message"
+  );
+  const [afterHoursTransferNumber, setAfterHoursTransferNumber] = useState(
+    agent?.afterHoursTransferNumber ?? ""
   );
   const [saving, setSaving] = useState(false);
 
@@ -186,6 +204,9 @@ export function AgentForm({ agent }: AgentFormProps) {
         voiceSettings,
         interruptible,
         timezone,
+        afterHoursGreeting: afterHoursGreeting.trim(),
+        afterHoursBehaviour,
+        afterHoursTransferNumber: afterHoursTransferNumber.trim(),
         ...(agent ? { agentId: agent.elevenlabsAgentId } : {}),
       };
 
@@ -316,23 +337,48 @@ export function AgentForm({ agent }: AgentFormProps) {
                 />
               </div>
 
-              {/* Escalation number */}
-              <div className="space-y-2">
-                <Label htmlFor="escalation-number">
-                  Escalation Phone Number
-                </Label>
-                <Input
-                  id="escalation-number"
-                  type="tel"
-                  value={escalationNumber}
-                  onChange={(e) => setEscalationNumber(e.target.value)}
-                  placeholder="e.g. +61 400 000 000"
-                  className="max-w-md"
-                />
-                <p className="text-xs text-muted-foreground">
-                  When the AI agent cannot handle a call, it will transfer to
-                  this number.
-                </p>
+              {/* Call transfer */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-4 max-w-md">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="call-transfer-toggle" className="font-medium">
+                      Enable Call Transfer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {callTransferEnabled
+                        ? "Your AI will transfer calls it can\u2019t handle to a live person."
+                        : "Call transfer to a live person is disabled."}
+                    </p>
+                  </div>
+                  <Switch
+                    id="call-transfer-toggle"
+                    checked={callTransferEnabled}
+                    onCheckedChange={(checked) => {
+                      setCallTransferEnabled(checked);
+                      if (!checked) setEscalationNumber("");
+                    }}
+                  />
+                </div>
+
+                {callTransferEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="escalation-number">
+                      Transfer Calls To
+                    </Label>
+                    <Input
+                      id="escalation-number"
+                      type="tel"
+                      value={escalationNumber}
+                      onChange={(e) => setEscalationNumber(e.target.value)}
+                      placeholder="e.g. +61 400 000 000"
+                      className="max-w-md"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your AI will say &quot;Let me transfer you to my
+                      colleague&quot; and connect them to this number.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Timezone */}
@@ -482,24 +528,146 @@ export function AgentForm({ agent }: AgentFormProps) {
         {/* BUSINESS HOURS TAB                                               */}
         {/* ================================================================ */}
         <TabsContent value="hours">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-[#F5A623]" />
-                Business Hours
-              </CardTitle>
-              <CardDescription>
-                Set when your agent is available. Outside these hours, callers
-                will hear the after-hours message.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BusinessHours
-                value={businessHours}
-                onChange={setBusinessHours}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-[#F5A623]" />
+                  Business Hours
+                </CardTitle>
+                <CardDescription>
+                  Set when your agent is available. Outside these hours, callers
+                  will hear the after-hours message.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BusinessHours
+                  value={businessHours}
+                  onChange={setBusinessHours}
+                />
+              </CardContent>
+            </Card>
+
+            {/* After-Hours Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Moon className="h-5 w-5 text-[#F5A623]" />
+                  After-Hours Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure how your agent behaves when callers reach you outside
+                  business hours.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Toggle */}
+                <div className="flex items-center justify-between rounded-lg border p-4 max-w-md">
+                  <div className="space-y-0.5">
+                    <Label className="font-medium">
+                      Use different greeting after hours
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {afterHoursGreeting
+                        ? "A custom greeting will be used outside business hours."
+                        : "Enable to set a custom after-hours greeting."}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!!afterHoursGreeting}
+                    onCheckedChange={(checked) => {
+                      if (!checked) {
+                        setAfterHoursGreeting("");
+                      } else {
+                        setAfterHoursGreeting(
+                          "Thanks for calling [Business]. We're currently closed. Our hours are Monday to Friday, 9am to 5pm. I can take a message and we'll call you back first thing."
+                        );
+                      }
+                    }}
+                  />
+                </div>
+
+                {afterHoursGreeting && (
+                  <>
+                    {/* After-Hours Greeting */}
+                    <div className="space-y-2">
+                      <Label htmlFor="after-hours-greeting">
+                        After-Hours Greeting
+                      </Label>
+                      <Textarea
+                        id="after-hours-greeting"
+                        value={afterHoursGreeting}
+                        onChange={(e) => setAfterHoursGreeting(e.target.value)}
+                        placeholder="Thanks for calling [Business]. We're currently closed. Our hours are Monday to Friday, 9am to 5pm. I can take a message and we'll call you back first thing."
+                        rows={3}
+                        className="resize-none"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        This greeting will be used instead of the default when
+                        callers reach your agent outside business hours.
+                      </p>
+                    </div>
+
+                    {/* After-Hours Behaviour */}
+                    <div className="space-y-2">
+                      <Label htmlFor="after-hours-behaviour">
+                        After-Hours Behaviour
+                      </Label>
+                      <Select
+                        value={afterHoursBehaviour}
+                        onValueChange={setAfterHoursBehaviour}
+                      >
+                        <SelectTrigger
+                          id="after-hours-behaviour"
+                          className="max-w-md"
+                        >
+                          <SelectValue placeholder="Select behaviour" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="message">
+                            Take a message
+                          </SelectItem>
+                          <SelectItem value="transfer">
+                            Transfer to mobile
+                          </SelectItem>
+                          <SelectItem value="voicemail">
+                            Voicemail only
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        What should the agent do when a call comes in after
+                        hours?
+                      </p>
+                    </div>
+
+                    {/* Transfer number (only when transfer is selected) */}
+                    {afterHoursBehaviour === "transfer" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="after-hours-transfer">
+                          After-Hours Transfer Number
+                        </Label>
+                        <Input
+                          id="after-hours-transfer"
+                          type="tel"
+                          value={afterHoursTransferNumber}
+                          onChange={(e) =>
+                            setAfterHoursTransferNumber(e.target.value)
+                          }
+                          placeholder="e.g. +61 400 000 000"
+                          className="max-w-md"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Calls received after hours will be transferred to this
+                          number.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* ================================================================ */}
@@ -556,7 +724,7 @@ export function AgentForm({ agent }: AgentFormProps) {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  The primary language your agent will use for conversations.
+                  Your agent will greet callers and respond in this language. Most Australian businesses use English.
                 </p>
               </div>
 

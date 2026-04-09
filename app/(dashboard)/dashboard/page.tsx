@@ -23,6 +23,10 @@ import { DashboardChart } from "@/components/dashboard/chart";
 import { Onboarding } from "@/components/dashboard/onboarding";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { SetupCallBanner } from "@/components/dashboard/setup-call-banner";
+import { ROICalculator } from "@/components/dashboard/roi-calculator";
+import { SentimentBadge } from "@/components/ui/sentiment-badge";
+import { Insights } from "@/components/dashboard/insights";
+import { PausedBanner } from "@/components/dashboard/paused-banner";
 
 const statusVariant: Record<string, "default" | "success" | "destructive" | "warning" | "secondary"> = {
   completed: "success",
@@ -81,7 +85,7 @@ export default async function DashboardPage() {
   // Fetch recent calls
   const { data: recentCalls } = await supabase
     .from("calls")
-    .select("id, caller_number, status, duration, created_at, summary")
+    .select("id, caller_number, status, duration, created_at, summary, sentiment")
     .eq("organization_id", orgId)
     .order("created_at", { ascending: false })
     .limit(10);
@@ -96,6 +100,20 @@ export default async function DashboardPage() {
     .eq("organization_id", orgId)
     .gte("created_at", sevenDaysAgo.toISOString());
 
+  // Previous week calls for insights comparison
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+  const { data: prevWeekCallsData } = await supabase
+    .from("calls")
+    .select("created_at")
+    .eq("organization_id", orgId)
+    .gte("created_at", fourteenDaysAgo.toISOString())
+    .lt("created_at", sevenDaysAgo.toISOString());
+
+  const prevWeekCallCount = prevWeekCallsData?.length ?? 0;
+  const thisWeekCallCount = weekCalls?.length ?? 0;
+
   // Build chart data
   const chartData: { day: string; calls: number }[] = [];
   for (let i = 6; i >= 0; i--) {
@@ -109,6 +127,24 @@ export default async function DashboardPage() {
     chartData.push({ day: dayStr, calls: count });
   }
 
+  // Calculate insights data
+  const avgDuration =
+    (durationData ?? []).length > 0
+      ? (durationData ?? []).reduce((sum, c) => sum + (c.duration ?? 0), 0) /
+        (durationData ?? []).length
+      : 0;
+
+  const callsByDay: Record<string, number> = {};
+  for (const entry of chartData) {
+    callsByDay[entry.day] = entry.calls;
+  }
+  const busiestDay =
+    chartData.length > 0
+      ? chartData.reduce((best, cur) =>
+          cur.calls > best.calls ? cur : best
+        ).day
+      : null;
+
   // Get subscription for minutes included (active OR trialing)
   const { data: subscription } = await supabase
     .from("subscriptions")
@@ -118,6 +154,30 @@ export default async function DashboardPage() {
     .single();
 
   const minutesIncluded = subscription?.minutes_included ?? 0;
+
+  // Monthly call stats for ROI calculator
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const { data: monthCalls } = await supabase
+    .from("calls")
+    .select("duration")
+    .eq("organization_id", orgId)
+    .gte("created_at", monthStart.toISOString());
+
+  const monthlyCallCount = monthCalls?.length ?? 0;
+  const monthlyMinutes = Math.round(
+    (monthCalls ?? []).reduce((sum, c) => sum + (c.duration ?? 0), 0) / 60
+  );
+
+  // Plan price mapping (monthly)
+  const planPriceMap: Record<string, number> = {
+    essential: 99,
+    complete: 249,
+    enterprise: 499,
+  };
+  const planPrice = planPriceMap[subscription?.plan ?? "essential"] ?? 99;
 
   // Onboarding checks
   const { data: profile } = await supabase
@@ -131,6 +191,14 @@ export default async function DashboardPage() {
     .select("twilio_number")
     .eq("id", orgId)
     .single();
+
+  // service_paused is a new column - query separately to avoid type issues
+  const { data: orgExtra } = await supabase
+    .from("organizations")
+    .select("*")
+    .eq("id", orgId)
+    .single();
+  const servicePaused = !!(orgExtra as Record<string, unknown> | null)?.service_paused;
 
   const { data: agentCheck } = await supabase
     .from("agents")
@@ -187,6 +255,9 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* Paused service banner */}
+      {servicePaused && <PausedBanner />}
+
       {/* Trial banner (shows only for trialing users) */}
       {subscription?.status === "trialing" && subscription.current_period_end && (
         <TrialBanner
@@ -226,6 +297,27 @@ export default async function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Insights & Suggestions (show if user has at least 1 call or 1 agent) */}
+      {((totalCalls ?? 0) > 0 || (activeAgents ?? 0) > 0) && (
+        <Insights
+          totalCalls={thisWeekCallCount}
+          prevWeekCalls={prevWeekCallCount}
+          avgDuration={avgDuration}
+          faqCount={faqCount}
+          kbCount={kbCount}
+          leadsCount={appointments ?? 0}
+          busiestDay={busiestDay}
+          callsByDay={callsByDay}
+        />
+      )}
+
+      {/* ROI Calculator */}
+      <ROICalculator
+        totalCalls={monthlyCallCount}
+        totalMinutes={monthlyMinutes}
+        planPrice={planPrice}
+      />
 
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Call volume chart */}
@@ -286,6 +378,7 @@ export default async function DashboardPage() {
                   <TableHead>Caller</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="hidden sm:table-cell">Sentiment</TableHead>
                   <TableHead className="hidden md:table-cell">Summary</TableHead>
                 </TableRow>
               </TableHeader>
@@ -307,6 +400,9 @@ export default async function DashboardPage() {
                       <Badge variant={statusVariant[call.status] ?? "secondary"}>
                         {call.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <SentimentBadge sentiment={call.sentiment} />
                     </TableCell>
                     <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground">
                       {call.summary || "No summary available"}

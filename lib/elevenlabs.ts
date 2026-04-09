@@ -72,6 +72,9 @@ export interface AgentConfig {
   voiceSettings?: VoiceSettings;
   interruptible?: boolean;
   timezone?: string;
+  afterHoursGreeting?: string;
+  afterHoursBehaviour?: string;
+  afterHoursTransferNumber?: string;
 }
 
 export interface Agent {
@@ -166,6 +169,13 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
   if (config.timezone) {
     basePrompt += `\n\nTimezone: ${config.timezone}. Use this timezone for all date/time references.`;
   }
+  if (config.afterHoursGreeting) {
+    const behaviour = config.afterHoursBehaviour ?? "message";
+    basePrompt += `\n\nAfter-Hours Instructions: Outside of business hours, use this greeting: "${config.afterHoursGreeting}". After-hours behaviour: ${behaviour}.`;
+    if (behaviour === "transfer" && config.afterHoursTransferNumber) {
+      basePrompt += ` Transfer after-hours calls to: ${config.afterHoursTransferNumber}.`;
+    }
+  }
   const fullPrompt = buildPromptWithFaqs(basePrompt, config.faqs);
 
   return apiRequest<Agent>("/convai/agents/create", {
@@ -230,6 +240,13 @@ export async function updateAgent(
     if (config.timezone) {
       basePrompt += `\n\nTimezone: ${config.timezone}. Use this timezone for all date/time references.`;
     }
+    if (config.afterHoursGreeting) {
+      const behaviour = config.afterHoursBehaviour ?? "message";
+      basePrompt += `\n\nAfter-Hours Instructions: Outside of business hours, use this greeting: "${config.afterHoursGreeting}". After-hours behaviour: ${behaviour}.`;
+      if (behaviour === "transfer" && config.afterHoursTransferNumber) {
+        basePrompt += ` Transfer after-hours calls to: ${config.afterHoursTransferNumber}.`;
+      }
+    }
     const fullPrompt = buildPromptWithFaqs(basePrompt, config.faqs);
     agentSection.prompt = { prompt: fullPrompt };
   } else if (config.faqs && config.faqs.length > 0) {
@@ -272,10 +289,15 @@ export async function updateAgent(
   if (config.webhookUrl) {
     platformSettings.webhook = { url: config.webhookUrl };
   }
-  if (config.escalationNumber) {
-    platformSettings.call_transfer = {
-      phone_number: config.escalationNumber,
-    };
+  if (config.escalationNumber !== undefined) {
+    if (config.escalationNumber) {
+      platformSettings.call_transfer = {
+        phone_number: config.escalationNumber,
+      };
+    } else {
+      // Clear call transfer when escalation number is removed
+      platformSettings.call_transfer = null;
+    }
   }
   if (Object.keys(platformSettings).length > 0) {
     body.platform_settings = platformSettings;

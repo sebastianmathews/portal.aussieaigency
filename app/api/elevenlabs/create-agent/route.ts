@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
       voiceSettings,
       interruptible,
       timezone,
+      afterHoursGreeting,
+      afterHoursBehaviour,
+      afterHoursTransferNumber,
     } = body;
 
     if (!name || !voiceId || !greeting || !systemPrompt) {
@@ -76,6 +79,9 @@ export async function POST(request: NextRequest) {
       voiceSettings,
       interruptible,
       timezone,
+      afterHoursGreeting,
+      afterHoursBehaviour,
+      afterHoursTransferNumber,
     });
 
     // Insert into agents table with ALL fields
@@ -96,6 +102,9 @@ export async function POST(request: NextRequest) {
         voice_settings: voiceSettings ?? null,
         interruptible: interruptible ?? true,
         timezone: timezone ?? "Australia/Sydney",
+        after_hours_greeting: afterHoursGreeting ?? null,
+        after_hours_behaviour: afterHoursBehaviour ?? "message",
+        after_hours_transfer_number: afterHoursTransferNumber ?? null,
       })
       .select()
       .single();

@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { Building2, Save, Loader2, Calendar, CheckCircle2, ExternalLink } from "lucide-react";
+import { Building2, Save, Loader2, Calendar, CheckCircle2, ExternalLink, MessageSquare, PauseCircle, PlayCircle, AlertTriangle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PhoneNumberPicker } from "@/components/settings/phone-number-picker";
 
 const TIMEZONES = [
@@ -68,6 +69,10 @@ export default function SettingsPage() {
   const [twilioNumber, setTwilioNumber] = useState("");
   const [forwardingNumber, setForwardingNumber] = useState("");
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
+  const [notificationPhone, setNotificationPhone] = useState("");
+  const [servicePaused, setServicePaused] = useState(false);
+  const [togglingPause, setTogglingPause] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -101,6 +106,9 @@ export default function SettingsPage() {
         setTwilioNumber(org.twilio_number ?? "");
         setForwardingNumber(org.forwarding_number ?? "");
         setGoogleConnected(!!(org as Record<string, unknown>).google_connected);
+        setSmsNotificationsEnabled(!!(org as Record<string, unknown>).sms_notifications_enabled);
+        setNotificationPhone(((org as Record<string, unknown>).notification_phone as string) ?? "");
+        setServicePaused(!!(org as Record<string, unknown>).service_paused);
       }
 
       setLoading(false);
@@ -121,7 +129,9 @@ export default function SettingsPage() {
         industry,
         timezone,
         forwarding_number: forwardingNumber,
-      })
+        sms_notifications_enabled: smsNotificationsEnabled,
+        notification_phone: notificationPhone || null,
+      } as Record<string, unknown>)
       .eq("id", orgId);
 
     setSaving(false);
@@ -137,6 +147,35 @@ export default function SettingsPage() {
         title: "Settings saved",
         description: "Your organization settings have been updated.",
       });
+    }
+  };
+
+  const handleTogglePause = async (paused: boolean) => {
+    setTogglingPause(true);
+    try {
+      const res = await fetch("/api/org/pause", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paused }),
+      });
+
+      if (!res.ok) throw new Error("Failed to toggle service");
+
+      setServicePaused(paused);
+      toast({
+        title: paused ? "Service Paused" : "Service Resumed",
+        description: paused
+          ? "Your AI receptionist is paused. Calls will not be answered."
+          : "Your AI receptionist is now active and answering calls.",
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to update service status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setTogglingPause(false);
     }
   };
 
@@ -245,6 +284,109 @@ export default function SettingsPage() {
               Your mobile or office number for human escalation.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* SMS Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageSquare className="h-5 w-5 text-[#F5A623]" />
+            SMS Notifications
+          </CardTitle>
+          <CardDescription>
+            Get an instant text message every time your AI agent handles a call.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4 max-w-md">
+            <div className="space-y-0.5">
+              <Label htmlFor="sms-toggle" className="font-medium">
+                Enable SMS Notifications
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {smsNotificationsEnabled
+                  ? "You will receive an SMS after every call."
+                  : "SMS notifications are turned off."}
+              </p>
+            </div>
+            <Switch
+              id="sms-toggle"
+              checked={smsNotificationsEnabled}
+              onCheckedChange={setSmsNotificationsEnabled}
+            />
+          </div>
+
+          {smsNotificationsEnabled && (
+            <div className="space-y-2 max-w-md">
+              <Label htmlFor="notification-phone">Notification Phone Number</Label>
+              <Input
+                id="notification-phone"
+                type="tel"
+                value={notificationPhone}
+                onChange={(e) => setNotificationPhone(e.target.value)}
+                placeholder="+61 4XX XXX XXX"
+              />
+              <p className="text-xs text-muted-foreground">
+                The mobile number where you want to receive call notifications.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Service Status */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className={`rounded-full p-2 ${servicePaused ? "bg-amber-50" : "bg-green-50"}`}>
+              {servicePaused ? (
+                <PauseCircle className="h-5 w-5 text-amber-600" />
+              ) : (
+                <PlayCircle className="h-5 w-5 text-green-600" />
+              )}
+            </div>
+            <div>
+              <CardTitle className="text-lg">Service Status</CardTitle>
+              <CardDescription>
+                Pause or resume your AI receptionist
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4 max-w-md">
+            <div className="space-y-0.5">
+              <Label htmlFor="pause-toggle" className="font-medium">
+                Pause AI Receptionist
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {servicePaused
+                  ? "Your AI receptionist is currently paused."
+                  : "Your AI receptionist is active and answering calls."}
+              </p>
+            </div>
+            <Switch
+              id="pause-toggle"
+              checked={servicePaused}
+              onCheckedChange={handleTogglePause}
+              disabled={togglingPause}
+            />
+          </div>
+
+          {servicePaused && (
+            <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 max-w-md">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Your AI receptionist is paused
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Calls will not be answered. Resume anytime to reactivate your agents.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

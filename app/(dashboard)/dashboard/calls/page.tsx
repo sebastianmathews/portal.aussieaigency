@@ -43,6 +43,7 @@ import {
   Filter,
 } from "lucide-react";
 import { formatDuration, formatDate, formatPhone } from "@/lib/utils";
+import { SentimentBadge } from "@/components/ui/sentiment-badge";
 
 const statusVariant: Record<
   string,
@@ -71,6 +72,7 @@ interface Call {
   created_at: string | null;
   summary: string | null;
   transcript: TranscriptEntry[] | null;
+  sentiment: string | null;
 }
 
 export default function CallsPage() {
@@ -114,7 +116,7 @@ export default function CallsPage() {
     let query = supabase
       .from("calls")
       .select(
-        "id, caller_number, status, duration, created_at, summary, transcript",
+        "id, caller_number, status, duration, created_at, summary, transcript, sentiment",
         { count: "exact" }
       )
       .eq("organization_id", orgId)
@@ -364,6 +366,7 @@ export default function CallsPage() {
                     <TableHead>Duration</TableHead>
                     <TableHead>Messages</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sentiment</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Summary
                     </TableHead>
@@ -426,6 +429,9 @@ export default function CallsPage() {
                                 : call.status}
                             </Badge>
                           </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <SentimentBadge sentiment={call.sentiment} />
+                          </TableCell>
                           <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground text-sm">
                             {call.summary || "No summary"}
                           </TableCell>
@@ -446,7 +452,7 @@ export default function CallsPage() {
                         {/* Expanded inline transcript */}
                         {isExpanded && (
                           <TableRow key={`${call.id}-expanded`}>
-                            <TableCell colSpan={8} className="bg-gray-50 p-0">
+                            <TableCell colSpan={9} className="bg-gray-50 p-0">
                               <div className="px-6 py-4">
                                 {call.transcript &&
                                 Array.isArray(call.transcript) &&

@@ -23,7 +23,27 @@ import {
   BookOpen,
   LayoutDashboard,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+const AGENT_LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "zh", label: "Mandarin" },
+  { value: "vi", label: "Vietnamese" },
+  { value: "ar", label: "Arabic" },
+  { value: "hi", label: "Hindi" },
+  { value: "ko", label: "Korean" },
+  { value: "ja", label: "Japanese" },
+  { value: "es", label: "Spanish" },
+  { value: "it", label: "Italian" },
+  { value: "el", label: "Greek" },
+];
 
 type Step = "template" | "questions" | "voice" | "creating" | "success";
 
@@ -35,6 +55,7 @@ export default function NewAgentPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [voiceId, setVoiceId] = useState("");
   const [agentName, setAgentName] = useState("");
+  const [language, setLanguage] = useState("en");
   const [creating, setCreating] = useState(false);
 
   const template = selectedTemplate ? getTemplate(selectedTemplate) : null;
@@ -101,7 +122,7 @@ export default function NewAgentPage() {
           greeting,
           systemPrompt,
           faqs,
-          language: "en",
+          language,
           maxCallDuration: 300,
           callRecording: true,
           interruptible: true,
@@ -367,6 +388,30 @@ export default function NewAgentPage() {
                 Select the voice your agent will use. Click play to preview.
               </p>
               <VoiceSelector value={voiceId} onChange={setVoiceId} />
+            </CardContent>
+          </Card>
+
+          {/* Language selection */}
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-[#0A1628] mb-1">
+                What language should your agent speak?
+              </h3>
+              <p className="text-sm text-[#6B7280] mb-4">
+                Your agent will greet callers and respond in this language. Most Australian businesses use English.
+              </p>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="max-w-md">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGENT_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
 

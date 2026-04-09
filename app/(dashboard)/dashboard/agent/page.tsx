@@ -14,6 +14,8 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Bot, Plus, Sparkles } from "lucide-react";
+import { TestCallCard } from "@/components/agent/test-call-card";
+import { CallCoaching } from "@/components/dashboard/call-coaching";
 
 export default async function AgentPage() {
   const supabase = await createClient();
@@ -94,6 +96,31 @@ export default async function AgentPage() {
   // If viewing/editing a specific agent (first one by default)
   const agent = agentList[0];
 
+  // Fetch recent calls for coaching analysis (last 7 days, failed/transferred/short)
+  const coachingCutoff = new Date();
+  coachingCutoff.setDate(coachingCutoff.getDate() - 7);
+
+  const { data: coachingCalls } = await supabase
+    .from("calls")
+    .select("status, summary, transcript")
+    .eq("organization_id", orgId)
+    .gte("created_at", coachingCutoff.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  // Filter to calls that have issues
+  const callsWithIssues = (coachingCalls ?? []).filter((c) => {
+    if (c.status === "failed" || c.status === "transferred") return true;
+    const summary = (c.summary ?? "").toLowerCase();
+    return (
+      summary.includes("couldn't answer") ||
+      summary.includes("didn't know") ||
+      summary.includes("transferred") ||
+      summary.includes("unable to help") ||
+      summary.includes("not sure")
+    );
+  });
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header with agent list */}
@@ -158,6 +185,14 @@ export default async function AgentPage() {
         </div>
       )}
 
+      {/* Test call card */}
+      {agent.elevenlabs_agent_id && (
+        <TestCallCard
+          agentId={agent.elevenlabs_agent_id}
+          agentName={agent.name}
+        />
+      )}
+
       {/* Current agent editor */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -185,6 +220,17 @@ export default async function AgentPage() {
         </div>
       </div>
 
+      {/* Call coaching suggestions (only when there are problematic calls) */}
+      {callsWithIssues.length > 0 && (
+        <CallCoaching
+          calls={callsWithIssues.map((c) => ({
+            status: c.status,
+            summary: c.summary,
+            transcript: c.transcript,
+          }))}
+        />
+      )}
+
       <AgentForm
         agent={{
           id: agent.id,
@@ -204,6 +250,9 @@ export default async function AgentPage() {
           voiceSettings: (agent.voice_settings as unknown as VoiceSettingsData) ?? DEFAULT_VOICE_SETTINGS,
           interruptible: (agent as Record<string, unknown>).interruptible as boolean ?? true,
           timezone: ((agent as Record<string, unknown>).timezone as string) ?? "Australia/Sydney",
+          afterHoursGreeting: ((agent as Record<string, unknown>).after_hours_greeting as string) ?? "",
+          afterHoursBehaviour: ((agent as Record<string, unknown>).after_hours_behaviour as string) ?? "message",
+          afterHoursTransferNumber: ((agent as Record<string, unknown>).after_hours_transfer_number as string) ?? "",
         }}
       />
     </div>
