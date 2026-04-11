@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAgentConversations, getConversation } from "@/lib/elevenlabs";
+import { sendCallSMS, sendUnresolvedCallAlert, isUnresolvedCall } from "@/lib/notifications";
 
 export async function POST() {
   try {
@@ -37,7 +38,7 @@ export async function POST() {
 
     const { data: agent } = await supabase
       .from("agents")
-      .select("id, elevenlabs_agent_id")
+      .select("id, elevenlabs_agent_id, name")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -109,8 +110,68 @@ export async function POST() {
         };
 
         await supabase.from("calls").insert(insertData as never);
-
         synced++;
+
+        // Send notifications for new calls
+        try {
+          const { data: orgData } = await supabase
+            .from("organizations")
+            .select("*")
+            .eq("id", orgId)
+            .single();
+          const org = orgData as Record<string, unknown> | null;
+
+          const callStatus = (insertData.status as string) ?? "completed";
+
+          // SMS notification
+          if (org?.sms_notifications_enabled && org?.notification_phone) {
+            await sendCallSMS({
+              ownerPhone: org.notification_phone as string,
+              callerNumber: callerNumber,
+              duration,
+              summary,
+              status: callStatus,
+              agentName: agent.name ?? "Your AI Agent",
+            }).catch(() => {});
+          }
+
+          // Unresolved call alert
+          if (isUnresolvedCall(callStatus, duration)) {
+            const { data: ownerProfile } = await supabase
+              .from("profiles")
+              .select("email")
+              .eq("organization_id", orgId)
+              .limit(1)
+              .maybeSingle();
+
+            if (ownerProfile?.email) {
+              const { data: insertedCall } = await supabase
+                .from("calls")
+                .select("id")
+                .eq("elevenlabs_conversation_id", conv.conversation_id)
+                .maybeSingle();
+
+              const alertParams: Parameters<typeof sendUnresolvedCallAlert>[0] = {
+                ownerEmail: ownerProfile.email,
+                ownerPhone: org?.notification_phone ? String(org.notification_phone) : undefined,
+                smsEnabled: !!org?.sms_notifications_enabled,
+                callerNumber,
+                callTime: conv.start_time || new Date().toISOString(),
+                callId: insertedCall?.id ?? "",
+                status: callStatus,
+                duration,
+                summary,
+                agentName: agent.name ?? "Your AI Agent",
+                transcriptExcerpt: Array.isArray(transcript) && transcript.length > 0
+                  ? transcript.slice(0, 3).map((t: Record<string, unknown>) => `${t.role}: ${t.message}`).join("\n")
+                  : null,
+              };
+              await sendUnresolvedCallAlert(alertParams).catch(() => {});
+            }
+          }
+        } catch {
+          // Non-blocking — don't fail sync if notifications fail
+        }
       } catch (convError) {
         console.error(
           `Failed to sync conversation ${conv.conversation_id}:`,
