@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -17,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Phone, Clock, Bot, CalendarCheck } from "lucide-react";
+import { Phone, Clock, Bot, CalendarCheck, ArrowRight, Rocket } from "lucide-react";
 import { formatDuration, formatDate, formatPhone } from "@/lib/utils";
 import { DashboardChart } from "@/components/dashboard/chart";
 import { Onboarding } from "@/components/dashboard/onboarding";
@@ -158,6 +159,11 @@ export default async function DashboardPage() {
     : 0;
   const hasKnowledge = faqCount > 0 || kbCount > 0;
 
+  // Show quick-setup banner for brand new users (no agents, created within last 5 minutes)
+  const userCreatedAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  const isNewUser = !hasAgent && userCreatedAt > fiveMinutesAgo;
+
   const stats = [
     {
       title: "Total Calls",
@@ -197,6 +203,32 @@ export default async function DashboardPage() {
           Overview of your AI receptionist performance
         </p>
       </div>
+
+      {/* Quick setup banner for new users */}
+      {isNewUser && (
+        <Link
+          href="/dashboard/setup"
+          className="block rounded-2xl border-2 border-[#F5A623]/40 bg-gradient-to-r from-[#F5A623]/10 to-[#F5A623]/5 p-5 sm:p-6 hover:border-[#F5A623]/60 hover:shadow-lg transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#F5A623]/20 flex items-center justify-center shrink-0">
+              <Rocket className="h-6 w-6 text-[#F5A623]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-[#0A1628] text-base sm:text-lg">
+                Welcome! Let&apos;s set up your AI receptionist in 60 seconds
+              </h3>
+              <p className="text-sm text-[#6B7280] mt-0.5 hidden sm:block">
+                Paste your website and we&apos;ll create everything automatically
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-lg bg-[#F5A623] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all group-hover:bg-[#e0951e] group-hover:shadow-md shrink-0">
+              Start Setup
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* Paused service banner */}
       {servicePaused && <PausedBanner />}
