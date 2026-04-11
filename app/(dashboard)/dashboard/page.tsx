@@ -54,63 +54,33 @@ export default async function DashboardPage() {
   const orgId = orgMembership?.organization_id;
   if (!orgId) redirect("/login");
 
-  // Fetch stats
-  const { count: totalCalls } = await supabase
-    .from("calls")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", orgId);
+  // Fetch all stats in parallel for speed
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-  const { data: durationData } = await supabase
-    .from("calls")
-    .select("duration")
-    .eq("organization_id", orgId);
+  const [
+    { count: totalCalls },
+    { data: durationData },
+    { count: activeAgents },
+    { count: appointments },
+    { data: recentCalls },
+    { data: weekCalls },
+    { data: prevWeekCallsData },
+  ] = await Promise.all([
+    supabase.from("calls").select("*", { count: "exact", head: true }).eq("organization_id", orgId),
+    supabase.from("calls").select("duration").eq("organization_id", orgId),
+    supabase.from("agents").select("*", { count: "exact", head: true }).eq("organization_id", orgId).eq("is_active", true),
+    supabase.from("calls").select("*", { count: "exact", head: true }).eq("organization_id", orgId).eq("status", "completed").not("lead_data", "is", null),
+    supabase.from("calls").select("id, caller_number, status, duration, created_at, summary, sentiment").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(10),
+    supabase.from("calls").select("created_at").eq("organization_id", orgId).gte("created_at", sevenDaysAgo.toISOString()),
+    supabase.from("calls").select("created_at").eq("organization_id", orgId).gte("created_at", fourteenDaysAgo.toISOString()).lt("created_at", sevenDaysAgo.toISOString()),
+  ]);
 
   const totalMinutes = Math.round(
     (durationData ?? []).reduce((sum, c) => sum + (c.duration ?? 0), 0) / 60
   );
-
-  const { count: activeAgents } = await supabase
-    .from("agents")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", orgId)
-    .eq("is_active", true);
-
-  const { count: appointments } = await supabase
-    .from("calls")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", orgId)
-    .eq("status", "completed")
-    .not("lead_data", "is", null);
-
-  // Fetch recent calls
-  const { data: recentCalls } = await supabase
-    .from("calls")
-    .select("id, caller_number, status, duration, created_at, summary, sentiment")
-    .eq("organization_id", orgId)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  // Fetch call volume for last 7 days
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  const { data: weekCalls } = await supabase
-    .from("calls")
-    .select("created_at")
-    .eq("organization_id", orgId)
-    .gte("created_at", sevenDaysAgo.toISOString());
-
-  // Previous week calls for insights comparison
-  const fourteenDaysAgo = new Date();
-  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-  const { data: prevWeekCallsData } = await supabase
-    .from("calls")
-    .select("created_at")
-    .eq("organization_id", orgId)
-    .gte("created_at", fourteenDaysAgo.toISOString())
-    .lt("created_at", sevenDaysAgo.toISOString());
-
   const prevWeekCallCount = prevWeekCallsData?.length ?? 0;
   const thisWeekCallCount = weekCalls?.length ?? 0;
 
@@ -145,67 +115,40 @@ export default async function DashboardPage() {
         ).day
       : null;
 
-  // Get subscription for minutes included (active OR trialing)
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("plan, minutes_included, status, current_period_end")
-    .eq("organization_id", orgId)
-    .in("status", ["active", "trialing"])
-    .single();
-
-  const minutesIncluded = subscription?.minutes_included ?? 0;
-
-  // Monthly call stats for ROI calculator
+  // Second batch — all in parallel
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const { data: monthCalls } = await supabase
-    .from("calls")
-    .select("duration")
-    .eq("organization_id", orgId)
-    .gte("created_at", monthStart.toISOString());
+  const [
+    { data: subscription },
+    { data: monthCalls },
+    { data: profile },
+    { data: orgData },
+    { data: agentCheck },
+  ] = await Promise.all([
+    supabase.from("subscriptions").select("plan, minutes_included, status, current_period_end").eq("organization_id", orgId).in("status", ["active", "trialing"]).single(),
+    supabase.from("calls").select("duration").eq("organization_id", orgId).gte("created_at", monthStart.toISOString()),
+    supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+    supabase.from("organizations").select("*").eq("id", orgId).single(),
+    supabase.from("agents").select("id, faqs, knowledge_items").eq("organization_id", orgId).limit(1).maybeSingle(),
+  ]);
 
+  const minutesIncluded = subscription?.minutes_included ?? 0;
   const monthlyCallCount = monthCalls?.length ?? 0;
   const monthlyMinutes = Math.round(
     (monthCalls ?? []).reduce((sum, c) => sum + (c.duration ?? 0), 0) / 60
   );
 
-  // Plan price mapping (monthly)
   const planPriceMap: Record<string, number> = {
-    essential: 99,
-    complete: 249,
-    enterprise: 499,
+    essential: 297,
+    complete: 497,
+    enterprise: 997,
   };
-  const planPrice = planPriceMap[subscription?.plan ?? "essential"] ?? 99;
+  const planPrice = planPriceMap[subscription?.plan ?? "essential"] ?? 297;
 
-  // Onboarding checks
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
-
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("twilio_number")
-    .eq("id", orgId)
-    .single();
-
-  // service_paused is a new column - query separately to avoid type issues
-  const { data: orgExtra } = await supabase
-    .from("organizations")
-    .select("*")
-    .eq("id", orgId)
-    .single();
-  const servicePaused = !!(orgExtra as Record<string, unknown> | null)?.service_paused;
-
-  const { data: agentCheck } = await supabase
-    .from("agents")
-    .select("id, faqs, knowledge_items")
-    .eq("organization_id", orgId)
-    .limit(1)
-    .maybeSingle();
+  const org = orgData;
+  const servicePaused = !!(orgData as Record<string, unknown> | null)?.service_paused;
 
   const hasAgent = !!agentCheck;
   const hasPhone = !!org?.twilio_number;

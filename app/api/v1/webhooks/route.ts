@@ -146,6 +146,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // RLS handles org scoping, but also verify user has an org
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.organization_id) {
+      return NextResponse.json({ error: "No organization" }, { status: 403 });
+    }
+
     const { error } = await supabase
       .from("webhooks" as never)
       .delete()
