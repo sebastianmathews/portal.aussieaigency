@@ -797,7 +797,7 @@ export function AgentForm({ agent }: AgentFormProps) {
           <p className="text-sm text-muted-foreground hidden sm:block">
             {isNew
               ? "Fill in the required fields and save to create your agent."
-              : "Changes will be synced to ElevenLabs automatically."}
+              : "Changes will be saved and applied automatically."}
           </p>
           <Button
             variant="gold"
