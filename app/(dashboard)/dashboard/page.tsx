@@ -45,6 +45,24 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
+  // Auto-redirect brand new users to setup wizard
+  const { data: orgCheck } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (orgCheck?.organization_id) {
+    const { count: agentCount } = await supabase
+      .from("agents")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", orgCheck.organization_id);
+
+    if (agentCount === 0) {
+      redirect("/dashboard/setup");
+    }
+  }
+
   // Get org membership
   const { data: orgMembership } = await supabase
     .from("profiles")
