@@ -49,7 +49,7 @@ export default async function WidgetPage() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.aussieaiagency.com.au";
 
   const iframeCode = agentId
-    ? `<!-- Aussie AI Agency Chat Widget -->\n<script>\n(function(){\n  var d=document,s=d.createElement('script');\n  s.src='${baseUrl}/widget-loader.js';\n  s.setAttribute('data-agent-id','${agentId}');\n  s.setAttribute('data-base-url','${baseUrl}');\n  s.async=true;\n  d.body.appendChild(s);\n})();\n</script>`
+    ? `<!-- Aussie AI Agency Voice Widget -->\n<script>\n(function(){\n  var d=document,s=d.createElement('script');\n  s.src='${baseUrl}/widget-loader.js';\n  s.setAttribute('data-agent-id','${agentId}');\n  s.setAttribute('data-base-url','${baseUrl}');\n  s.async=true;\n  d.body.appendChild(s);\n})();\n</script>`
     : null;
 
   const chatCode = agentId
