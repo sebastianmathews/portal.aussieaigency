@@ -56,7 +56,7 @@ const navItems = [
   { href: "/dashboard/calls", label: "Calls History", icon: Phone, minPlan: null },
   { href: "/dashboard/knowledge-base", label: "Knowledge Base", icon: BookOpen, minPlan: null },
   { href: "/dashboard/contacts", label: "Contacts", icon: Users, minPlan: null },
-  { href: "/dashboard/widget", label: "Website Widget", icon: Code2, minPlan: "complete" as const },
+  { href: "/dashboard/widget", label: "Website Widget", icon: Code2, minPlan: null },
   { href: "/dashboard/team", label: "Team", icon: UserPlus, minPlan: null },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone, minPlan: "enterprise" as const },
   { href: "/dashboard/api", label: "API", icon: Code2, minPlan: "enterprise" as const },

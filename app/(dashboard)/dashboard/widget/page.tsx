@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Globe, MessageSquare, Mic2, Headphones, Copy, Check } from "lucide-react";
 import { CopyButton } from "@/components/widget/copy-button";
 import { WidgetPreview } from "@/components/widget/widget-preview";
@@ -48,6 +49,18 @@ export default async function WidgetPage() {
 
   const agentId = agent?.elevenlabs_agent_id;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.aussieaiagency.com.au";
+
+  // Check subscription for chat widget gating
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("plan, status")
+    .eq("organization_id", orgId)
+    .in("status", ["active", "trialing"])
+    .single();
+
+  const plan = subscription?.plan ?? "essential";
+  const isTrial = subscription?.status === "trialing";
+  const hasChatAccess = plan === "complete" || plan === "enterprise";
 
   const iframeCode = agentId
     ? `<!-- Aussie AI Agency Voice Widget -->\n<script>\n(function(){\n  var d=document,s=d.createElement('script');\n  s.src='${baseUrl}/widget-loader.js';\n  s.setAttribute('data-agent-id','${agentId}');\n  s.setAttribute('data-base-url','${baseUrl}');\n  s.async=true;\n  d.body.appendChild(s);\n})();\n</script>`
@@ -258,18 +271,37 @@ export default async function WidgetPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="relative">
-                <pre className="bg-[#0A1628] text-green-400 p-4 rounded-lg text-sm overflow-x-auto font-mono leading-relaxed">
-                  {chatCode}
-                </pre>
-                <div className="absolute top-3 right-3">
-                  <CopyButton text={chatCode!} />
+              {hasChatAccess || isTrial ? (
+                <>
+                  {isTrial && !hasChatAccess && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                      You can test the chat widget during your trial. To embed it on your live website, upgrade to the Complete plan.
+                    </div>
+                  )}
+                  <div className="relative">
+                    <pre className="bg-[#0A1628] text-green-400 p-4 rounded-lg text-sm overflow-x-auto font-mono leading-relaxed">
+                      {chatCode}
+                    </pre>
+                    <div className="absolute top-3 right-3">
+                      <CopyButton text={chatCode!} />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <EmailInstructionsButton code={chatCode!} widgetType="Chat" />
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium text-[#0A1628] mb-1">Chat Widget is available on the Complete plan</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upgrade to add a text chat widget to your website so visitors can message your AI instantly.
+                  </p>
+                  <a href="/dashboard/billing">
+                    <Button variant="gold" size="sm">Upgrade to Complete</Button>
+                  </a>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <EmailInstructionsButton code={chatCode!} widgetType="Chat" />
-              </div>
+              )}
             </CardContent>
           </Card>
 
