@@ -1,19 +1,24 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getAgentConversations, getConversation } from "@/lib/elevenlabs";
 
 export async function POST() {
   try {
-    const supabase = await createClient();
+    // Use user client for auth check
+    const userClient = await createClient();
 
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await userClient.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Use admin client for data operations (bypasses RLS for INSERT on calls)
+    const supabase = createAdminClient();
 
     // Get user's organization and agent
     const { data: profile } = await supabase
@@ -118,7 +123,7 @@ export async function POST() {
       {
         synced,
         total: conversations.length,
-        message: `Synced ${synced} new calls from ElevenLabs`,
+        message: `Synced ${synced} new call${synced !== 1 ? "s" : ""}`,
       },
       { status: 200 }
     );
