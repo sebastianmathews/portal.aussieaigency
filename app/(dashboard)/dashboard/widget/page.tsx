@@ -12,6 +12,7 @@ import { Globe, MessageSquare, Mic2, Headphones, Copy, Check } from "lucide-reac
 import { CopyButton } from "@/components/widget/copy-button";
 import { WidgetPreview } from "@/components/widget/widget-preview";
 import { EmailInstructionsButton } from "@/components/widget/email-instructions-button";
+import { ChatTest } from "@/components/widget/chat-test";
 
 export default async function WidgetPage() {
   const supabase = await createClient();
@@ -84,6 +85,9 @@ export default async function WidgetPage() {
         <>
           {/* Visual preview mockup */}
           <WidgetPreview agentName={agent.name ?? "AI Receptionist"} />
+
+          {/* Test your chat widget */}
+          <ChatTest agentId={agentId} agentName={agent.name ?? "AI Receptionist"} />
 
           {/* How it works - simple steps */}
           <Card>
