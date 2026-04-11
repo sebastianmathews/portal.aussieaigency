@@ -186,6 +186,7 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
         agent: {
           prompt: {
             prompt: fullPrompt,
+            llm: "gpt-4o-mini",
           },
           first_message: config.greeting,
           language: config.language ?? "en",
@@ -248,7 +249,7 @@ export async function updateAgent(
       }
     }
     const fullPrompt = buildPromptWithFaqs(basePrompt, config.faqs);
-    agentSection.prompt = { prompt: fullPrompt };
+    agentSection.prompt = { prompt: fullPrompt, llm: "gpt-4o-mini" };
   } else if (config.faqs && config.faqs.length > 0) {
     // FAQs changed but system prompt didn't — we still need to rebuild
     // This case is handled by always sending systemPrompt from the form
